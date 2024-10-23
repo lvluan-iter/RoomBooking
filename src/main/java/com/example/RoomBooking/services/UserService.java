@@ -3,19 +3,14 @@ package com.example.RoomBooking.services;
 import com.example.RoomBooking.dto.*;
 import com.example.RoomBooking.exceptions.ResourceNotFoundException;
 import com.example.RoomBooking.models.*;
-import com.example.RoomBooking.repositories.BookingRepository;
 import com.example.RoomBooking.repositories.PropertyRepository;
 import com.example.RoomBooking.repositories.RoleRepository;
 import com.example.RoomBooking.repositories.UserRepository;
 import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -29,7 +24,6 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final BookingRepository bookingRepository;
     private final RoleRepository roleRepository;
     private final PropertyRepository propertyRepository;
     private final PropertyService propertyService;
@@ -45,9 +39,8 @@ public class UserService {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
-    public UserService(UserRepository userRepository, BookingRepository bookingRepository, RoleRepository roleRepository, PropertyRepository propertyRepository, PasswordEncoder passwordEncoder, EmailService emailService, PropertyService propertyService) {
+    public UserService(UserRepository userRepository, RoleRepository roleRepository, PropertyRepository propertyRepository, PasswordEncoder passwordEncoder, EmailService emailService, PropertyService propertyService) {
         this.userRepository = userRepository;
-        this.bookingRepository = bookingRepository;
         this.roleRepository = roleRepository;
         this.propertyRepository = propertyRepository;
         this.passwordEncoder = passwordEncoder;
@@ -181,13 +174,6 @@ public class UserService {
         userRepository.save(user);
     }
 
-    public List<BookingResponse> getUserBookings(Long userId) {
-        List<Booking> bookings = bookingRepository.findByUserId(userId);
-        return bookings.stream()
-                .map(this::mapToBookingResponse)
-                .collect(Collectors.toList());
-    }
-
     @Transactional
     public void addPropertyToFavorites(Long userId, Long propertyId) {
         User user = userRepository.findById(userId)
@@ -267,17 +253,6 @@ public class UserService {
         response.setPublicEmail(user.isPublicEmail());
         response.setPublicPhone(user.isPublicPhone());
         response.setPublicProfile(user.isPublicProfile());
-        return response;
-    }
-
-    private BookingResponse mapToBookingResponse(Booking booking) {
-        BookingResponse response = new BookingResponse();
-        response.setId(booking.getId());
-        response.setPropertyId(booking.getProperty().getId());
-        response.setStartDate(booking.getStartDate());
-        response.setEndDate(booking.getEndDate());
-        response.setTotalPrice(booking.getTotalPrice());
-        // Add more fields if needed
         return response;
     }
 

@@ -89,12 +89,6 @@ public class UserController {
         }
     }
 
-    @GetMapping("/{userId}/bookings")
-    public ResponseEntity<List<BookingResponse>> getUserBookings(@PathVariable Long userId) {
-        List<BookingResponse> bookings = userService.getUserBookings(userId);
-        return ResponseEntity.ok(bookings);
-    }
-
     @MessageMapping("/user-status")
     public void handleUserStatus(UserStatusDTO userStatusDTO) {
         try {
