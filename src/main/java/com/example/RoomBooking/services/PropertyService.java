@@ -7,6 +7,7 @@ import com.example.RoomBooking.repositories.*;
 import com.example.RoomBooking.specifications.PropertySpecifications;
 import io.lettuce.core.RedisCommandExecutionException;
 import jakarta.transaction.Transactional;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -426,5 +427,14 @@ public class PropertyService {
         return property.getNearbyPlaces().stream()
                 .map(this::mapToNearbyPlaceDTO)
                 .collect(Collectors.toList());
+    }
+
+    public Property createTempProperty(PropertyRequest propertyRequest) {
+        Property property = new Property();
+        BeanUtils.copyProperties(propertyRequest, property);
+        LocalDateTime now = LocalDateTime.now();
+        property.setCreatedAt(now);
+        property.setUpdatedAt(now);
+        return property;
     }
 }

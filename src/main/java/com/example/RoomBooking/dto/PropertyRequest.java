@@ -1,5 +1,8 @@
 package com.example.RoomBooking.dto;
 
+import jakarta.persistence.Column;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class PropertyRequest {
@@ -21,6 +24,11 @@ public class PropertyRequest {
     private String type;
     private String keywords;
     private List<NearbyPlaceDTO> nearbyPlaces;
+    private boolean isPaid;
+    private boolean isLocked;
+    private boolean isApproved;
+    private String reason;
+    private LocalDateTime expirationDate;
 
     // Getters and Setters
     public String getTitle() {
@@ -157,5 +165,45 @@ public class PropertyRequest {
 
     public void setNearbyPlaces(List<NearbyPlaceDTO> nearbyPlaces) {
         this.nearbyPlaces = nearbyPlaces;
+    }
+
+    public boolean isPaid() {
+        return isPaid;
+    }
+
+    public void setPaid(boolean paid) {
+        isPaid = paid;
+    }
+
+    public boolean isLocked() {
+        return isLocked;
+    }
+
+    public void setLocked(boolean locked) {
+        isLocked = locked;
+    }
+
+    public boolean isApproved() {
+        return isApproved;
+    }
+
+    public void setApproved(boolean approved) {
+        isApproved = approved;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
+
+    public LocalDateTime getExpirationDate() {
+        return expirationDate;
+    }
+
+    public void setExpirationDate(LocalDateTime expirationDate) {
+        this.expirationDate = expirationDate;
     }
 }

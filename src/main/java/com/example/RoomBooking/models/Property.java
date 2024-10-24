@@ -253,7 +253,6 @@ public class Property {
         this.nearbyPlaces = nearbyPlaces;
     }
 
-    // Helper methods for managing bidirectional relationship
     public void addImage(Image image) {
         images.add(image);
         image.setProperty(this);
@@ -288,5 +287,45 @@ public class Property {
 
     public void setKeywords(String keywords) {
         this.keywords = keywords;
+    }
+
+    public boolean isPaid() {
+        return isPaid;
+    }
+
+    public void setPaid(boolean paid) {
+        isPaid = paid;
+    }
+
+    public boolean isLocked() {
+        return isLocked;
+    }
+
+    public void setLocked(boolean locked) {
+        isLocked = locked;
+    }
+
+    public boolean isApproved() {
+        return isApproved;
+    }
+
+    public void setApproved(boolean approved) {
+        isApproved = approved;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
+
+    public LocalDateTime getExpirationDate() {
+        return expirationDate;
+    }
+
+    public void setExpirationDate(LocalDateTime expirationDate) {
+        this.expirationDate = expirationDate;
     }
 }

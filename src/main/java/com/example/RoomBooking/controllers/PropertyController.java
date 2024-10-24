@@ -1,7 +1,17 @@
 package com.example.RoomBooking.controllers;
 
 import com.example.RoomBooking.dto.*;
+import com.example.RoomBooking.models.Property;
+import com.example.RoomBooking.models.User;
+import com.example.RoomBooking.repositories.PropertyRepository;
+import com.example.RoomBooking.services.DetailService;
 import com.example.RoomBooking.services.PropertyService;
+import com.example.RoomBooking.services.VNPayService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -11,7 +21,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -21,6 +36,15 @@ public class PropertyController {
 
     @Autowired
     private PropertyService propertyService;
+
+    @Autowired
+    private VNPayService vnPayService;
+
+    @Autowired
+    private DetailService detailService;
+
+    @Autowired
+    private PropertyRepository propertyRepository;
 
     @GetMapping("/available")
     public ResponseEntity<Page<PropertyResponse>> getAvailableProperties(
@@ -69,9 +93,68 @@ public class PropertyController {
     }
 
     @PostMapping
-    public ResponseEntity<?> addProperty(@RequestBody PropertyRequest propertyRequest) {
-        propertyService.addProperty(propertyRequest);
-        return ResponseEntity.ok("Property added successfully.");
+    public ResponseEntity<?> addProperty(@RequestBody PropertyRequest propertyRequest,
+                                         HttpServletRequest request,
+                                         HttpServletResponse response) {
+        try {
+            if (propertyRequest.isPaid()) {
+                Property tempProperty = propertyService.createTempProperty(propertyRequest);
+                String propertyJson = new ObjectMapper().writeValueAsString(tempProperty);
+                Cookie cookie = new Cookie("temp_property", Base64.getEncoder().encodeToString(propertyJson.getBytes()));
+                cookie.setMaxAge(30 * 60);
+                cookie.setPath("/");
+                response.addCookie(cookie);
+
+                String paymentUrl = vnPayService.createPaymentUrl(tempProperty, request);
+
+                Map<String, String> responseUrl = new HashMap<>();
+                responseUrl.put("paymentUrl", paymentUrl);
+                return ResponseEntity.ok(responseUrl);
+            } else {
+                propertyRequest.setExpirationDate(LocalDateTime.now().plusDays(7));
+                propertyService.addProperty(propertyRequest);
+                return ResponseEntity.ok("Đăng tin miễn phí thành công!");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error processing property: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/payment-callback")
+    public ResponseEntity<?> paymentCallback(@RequestParam Map<String, String> queryParams,
+                                             @CookieValue(name = "temp_property", required = false) String tempPropertyCookie) {
+        try {
+            String vnp_ResponseCode = queryParams.get("vnp_ResponseCode");
+            BigDecimal amount = new BigDecimal(queryParams.get("vnp_Amount")).divide(new BigDecimal(100));
+
+            if ("00".equals(vnp_ResponseCode) && tempPropertyCookie != null) {
+                byte[] decodedBytes = Base64.getDecoder().decode(tempPropertyCookie);
+                String propertyJson = new String(decodedBytes);
+                PropertyRequest tempProperty = new ObjectMapper().readValue(propertyJson, PropertyRequest.class);
+
+                Property property = new Property();
+                BeanUtils.copyProperties(tempProperty, property);
+
+                LocalDateTime now = LocalDateTime.now();
+                property.setCreatedAt(now);
+                property.setUpdatedAt(now);
+                property.setExpirationDate(now.plusDays(37));
+                property.setApproved(true);
+                property.setPaid(true);
+
+                Property savedProperty = propertyRepository.save(property);
+
+                detailService.createDetail(savedProperty.getUser(), savedProperty, amount);
+
+                return ResponseEntity.ok("Thanh toán thành công!");
+            } else {
+                return ResponseEntity.badRequest().body("Payment failed or invalid property data");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error processing payment callback: " + e.getMessage());
+        }
     }
 
     @PutMapping("/{propertyId}")
