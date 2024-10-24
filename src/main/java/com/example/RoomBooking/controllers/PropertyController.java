@@ -97,6 +97,7 @@ public class PropertyController {
                                          HttpServletRequest request,
                                          HttpServletResponse response) {
         try {
+            System.out.println("isPaid value: " + propertyRequest.isPaid());
             if (propertyRequest.isPaid()) {
                 Property tempProperty = propertyService.createTempProperty(propertyRequest);
                 String propertyJson = new ObjectMapper().writeValueAsString(tempProperty);
@@ -113,7 +114,9 @@ public class PropertyController {
             } else {
                 propertyRequest.setExpirationDate(LocalDateTime.now().plusDays(7));
                 propertyService.addProperty(propertyRequest);
-                return ResponseEntity.ok("Đăng tin miễn phí thành công!");
+                Map<String, String> responseurl = new HashMap<>();
+                responseurl.put("message", "Đăng tin miễn phí thành công!");
+                return ResponseEntity.ok(responseurl);
             }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
