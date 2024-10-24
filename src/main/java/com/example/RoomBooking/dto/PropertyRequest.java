@@ -1,5 +1,6 @@
 package com.example.RoomBooking.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
 
 import java.time.LocalDateTime;
@@ -24,6 +25,7 @@ public class PropertyRequest {
     private String type;
     private String keywords;
     private List<NearbyPlaceDTO> nearbyPlaces;
+    @JsonProperty("isPaid")
     private boolean isPaid;
     private boolean isLocked;
     private boolean isApproved;
@@ -171,8 +173,9 @@ public class PropertyRequest {
         return isPaid;
     }
 
+    @JsonProperty("isPaid")
     public void setPaid(boolean paid) {
-        isPaid = paid;
+        this.isPaid = paid;
     }
 
     public boolean isLocked() {
