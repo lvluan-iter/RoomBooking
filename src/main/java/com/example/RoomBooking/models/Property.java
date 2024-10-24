@@ -46,7 +46,11 @@ public class Property {
     @JoinTable(
             name = "property_amenities",
             joinColumns = @JoinColumn(name = "property_id"),
-            inverseJoinColumns = @JoinColumn(name = "amenity_id")
+            inverseJoinColumns = @JoinColumn(name = "amenity_id"),
+            uniqueConstraints = @UniqueConstraint(
+                    name = "uk_property_amenity",
+                    columnNames = {"property_id", "amenity_id"}
+            )
     )
     private List<Amenity> amenities;
 

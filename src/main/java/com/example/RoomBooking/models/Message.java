@@ -30,11 +30,6 @@ public class Message {
     @Column(nullable = false)
     private MessageStatus status;
 
-    @ElementCollection
-    @CollectionTable(name = "message_attachments", joinColumns = @JoinColumn(name = "message_id"))
-    @Column(name = "attachment_url")
-    private List<String> attachments;
-
     @Column(name = "conversation_id")
     private String conversationId;
 
