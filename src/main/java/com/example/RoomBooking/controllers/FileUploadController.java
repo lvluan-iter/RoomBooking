@@ -1,55 +1,60 @@
 package com.example.RoomBooking.controllers;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.io.File;
+import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
 public class FileUploadController {
 
-    @Value("${upload-dir}")
-    private String uploadDir;
+    private Cloudinary cloudinary;
+
+    @Value("${cloudinary.cloud-name}")
+    private String cloudName;
+
+    @Value("${cloudinary.api-key}")
+    private String apiKey;
+
+    @Value("${cloudinary.api-secret}")
+    private String apiSecret;
+
+    @PostConstruct
+    public void init() {
+        cloudinary = new Cloudinary(ObjectUtils.asMap(
+                "cloud_name", cloudName,
+                "api_key", apiKey,
+                "api_secret", apiSecret
+        ));
+    }
 
     @PostMapping("/upload-images")
     public List<String> uploadImages(@RequestParam("images") MultipartFile[] files) {
         List<String> fileUrls = new ArrayList<>();
         try {
             for (MultipartFile file : files) {
-                // Tạo UUID ngẫu nhiên cho tên file
-                String fileExtension = getFileExtension(file.getOriginalFilename());
-                String uniqueFileName = UUID.randomUUID().toString() + "." + fileExtension;
+                // Upload file lên Cloudinary
+                Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
+                        ObjectUtils.asMap(
+                                "resource_type", "auto",
+                                "folder", "room-booking"
+                        ));
 
-                // Lưu file vào thư mục upload với tên duy nhất
-                String filePath = uploadDir + File.separator + uniqueFileName;
-                File dest = new File(filePath);
-                file.transferTo(dest);
-
-                // Tạo URL hoàn chỉnh cho file đã upload
-                String fileUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-                        .path("/uploads/")
-                        .path(uniqueFileName)
-                        .toUriString();
-
+                String fileUrl = (String) uploadResult.get("secure_url");
                 fileUrls.add(fileUrl);
             }
             return fileUrls;
         } catch (IOException e) {
             e.printStackTrace();
-            // Xử lý lỗi tải lên ở đây
-            return null;
+            throw new RuntimeException("Lỗi khi upload ảnh: " + e.getMessage());
         }
-    }
-
-    // Phương thức để lấy phần mở rộng của file
-    private String getFileExtension(String filename) {
-        return filename.substring(filename.lastIndexOf(".") + 1);
     }
 }
