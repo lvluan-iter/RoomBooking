@@ -25,7 +25,6 @@ public class RedisConfig {
         config.setPort(redisPort);
 
         LettuceConnectionFactory factory = new LettuceConnectionFactory(config);
-        factory.setUseSsl(true);
         return factory;
     }
 
