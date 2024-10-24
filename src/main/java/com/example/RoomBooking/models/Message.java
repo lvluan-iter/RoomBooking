@@ -81,14 +81,6 @@ public class Message {
         this.status = status;
     }
 
-    public List<String> getAttachments() {
-        return attachments;
-    }
-
-    public void setAttachments(List<String> attachments) {
-        this.attachments = attachments;
-    }
-
     public String getConversationId() {
         return conversationId;
     }
