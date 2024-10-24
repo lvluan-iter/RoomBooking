@@ -1,5 +1,6 @@
 package com.example.RoomBooking.models;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -62,9 +63,11 @@ public class Property {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
@@ -98,6 +101,7 @@ public class Property {
     @Column(name = "reason")
     private String reason;
 
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Column(name = "expiration_date")
     private LocalDateTime expirationDate;
 

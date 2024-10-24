@@ -1,5 +1,6 @@
 package com.example.RoomBooking.models;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -24,6 +25,7 @@ public class Detail {
     @Column(name = "amount", nullable = false)
     private BigDecimal amount;
 
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Column(name = "detail_date", nullable = false)
     private LocalDateTime detailDate;
 
