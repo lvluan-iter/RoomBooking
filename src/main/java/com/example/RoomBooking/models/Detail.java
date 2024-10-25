@@ -15,13 +15,11 @@ public class Detail {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
-    @ManyToOne
-    @JoinColumn(name = "property_id", nullable = false)
-    private Property property;
+    @Column(name = "name", nullable = false)
+    private String name;
 
     @Column(name = "amount", nullable = false)
     private BigDecimal amount;
@@ -32,9 +30,9 @@ public class Detail {
     public Detail() {
     }
 
-    public Detail(User user, Property property, BigDecimal amount) {
-        this.user = user;
-        this.property = property;
+    public Detail(Long userId, String name, BigDecimal amount) {
+        this.userId = userId;
+        this.name = name;
         this.amount = amount;
         this.detailDate = new Timestamp(System.currentTimeMillis());
     }
@@ -47,20 +45,20 @@ public class Detail {
         this.id = id;
     }
 
-    public User getUser() {
-        return user;
+    public Long getUserId() {
+        return userId;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
-    public Property getProperty() {
-        return property;
+    public String getName() {
+        return name;
     }
 
-    public void setProperty(Property property) {
-        this.property = property;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public BigDecimal getAmount() {

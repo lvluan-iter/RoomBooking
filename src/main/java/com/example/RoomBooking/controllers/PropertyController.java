@@ -1,17 +1,11 @@
 package com.example.RoomBooking.controllers;
 
 import com.example.RoomBooking.dto.*;
-import com.example.RoomBooking.models.Property;
-import com.example.RoomBooking.models.User;
 import com.example.RoomBooking.repositories.PropertyRepository;
 import com.example.RoomBooking.services.DetailService;
 import com.example.RoomBooking.services.PropertyService;
 import com.example.RoomBooking.services.VNPayService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,11 +14,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.*;
 
@@ -116,6 +107,7 @@ public class PropertyController {
         try {
             String vnp_ResponseCode = queryParams.get("vnp_ResponseCode");
             String vnp_TransactionStatus = queryParams.get("vnp_TransactionStatus");
+            String vnp_OrderInfo = queryParams.get("vnp_OrderInfo");
             String reference = queryParams.get("vnp_TxnRef");
 
             if (!"00".equals(vnp_ResponseCode) || !"00".equals(vnp_TransactionStatus)) {
@@ -125,26 +117,22 @@ public class PropertyController {
             }
 
             try {
-                Property tempProperty = propertyService.getTempProperty(reference);
-
-                tempProperty.setCreatedAt(new Timestamp(System.currentTimeMillis()));
-                tempProperty.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
+                PropertyRequest propertyRequest = propertyService.getTempProperty(reference);
 
                 Calendar cal = Calendar.getInstance();
                 cal.add(Calendar.DAY_OF_MONTH, 37);
-                tempProperty.setExpirationDate(new Timestamp(cal.getTimeInMillis()));
+                propertyRequest.setExpirationDate(new Timestamp(cal.getTimeInMillis()));
 
-                tempProperty.setApproved(true);
-                tempProperty.setPaid(true);
+                propertyRequest.setApproved(true);
+                propertyRequest.setPaid(true);
 
-                Property savedProperty = propertyRepository.save(tempProperty);
+                propertyService.addProperty(propertyRequest);
 
                 BigDecimal amount = new BigDecimal(queryParams.get("vnp_Amount"))
                         .divide(new BigDecimal(100));
 
-                detailService.createDetail(savedProperty.getUser(), savedProperty, amount);
+                detailService.createDetail(propertyRequest.getUserId(), vnp_OrderInfo, amount);
                 propertyService.deleteTempProperty(reference);
-
                 return ResponseEntity.ok(Map.of("message", "Thanh toán thành công!"));
 
             } catch (Exception e) {

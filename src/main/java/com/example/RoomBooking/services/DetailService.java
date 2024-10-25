@@ -1,8 +1,6 @@
 package com.example.RoomBooking.services;
 
 import com.example.RoomBooking.models.Detail;
-import com.example.RoomBooking.models.Property;
-import com.example.RoomBooking.models.User;
 import com.example.RoomBooking.repositories.DetailRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,11 +12,15 @@ import java.util.Optional;
 public class DetailService {
 
     @Autowired
-    private DetailRepository detailRepository;
+    private final DetailRepository detailRepository;
 
-    public Detail createDetail(User user, Property property, BigDecimal amount) {
-        Detail detail = new Detail(user, property, amount);
-        return detailRepository.save(detail);
+    public DetailService(DetailRepository detailRepository) {
+        this.detailRepository = detailRepository;
+    }
+
+    public void createDetail(Long userId, String name, BigDecimal amount) {
+        Detail detail = new Detail(userId, name, amount);
+        detailRepository.save(detail);
     }
 
     public void deleteDetail(Long id) {

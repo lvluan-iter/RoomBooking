@@ -439,13 +439,10 @@ public class PropertyService {
 
     public String createTempPropertyAndGetRef(PropertyRequest propertyRequest) {
         try {
-            Property tempProperty = new Property();
-            BeanUtils.copyProperties(propertyRequest, tempProperty);
-
             String reference = generateUniqueReference();
-
-            String propertyJson = objectMapper.writeValueAsString(tempProperty);
+            String propertyJson = objectMapper.writeValueAsString(propertyRequest);
             String redisKey = TEMP_PROPERTY_PREFIX + reference;
+
             redisTemplate.opsForValue().set(redisKey, propertyJson, TEMP_PROPERTY_EXPIRY, TimeUnit.MINUTES);
 
             return reference;
@@ -454,7 +451,7 @@ public class PropertyService {
         }
     }
 
-    public Property getTempProperty(String reference) {
+    public PropertyRequest getTempProperty(String reference) {
         try {
             String redisKey = TEMP_PROPERTY_PREFIX + reference;
             String propertyJson = redisTemplate.opsForValue().get(redisKey);
@@ -463,7 +460,8 @@ public class PropertyService {
                 throw new ResourceNotFoundException("Temporary property not found or expired");
             }
 
-            return objectMapper.readValue(propertyJson, Property.class);
+            PropertyRequest propertyRequest = objectMapper.readValue(propertyJson, PropertyRequest.class);
+            return propertyRequest;
         } catch (Exception e) {
             throw new RuntimeException("Error retrieving temporary property", e);
         }

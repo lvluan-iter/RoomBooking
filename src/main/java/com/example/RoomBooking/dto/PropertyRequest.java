@@ -31,6 +31,7 @@ public class PropertyRequest {
     private boolean isLocked;
     private boolean isApproved;
     private String reason;
+    private Timestamp expirationDate;
 
     // Getters and Setters
     public String getTitle() {
@@ -200,5 +201,13 @@ public class PropertyRequest {
 
     public void setReason(String reason) {
         this.reason = reason;
+    }
+
+    public Timestamp getExpirationDate() {
+        return expirationDate;
+    }
+
+    public void setExpirationDate(Timestamp expirationDate) {
+        this.expirationDate = expirationDate;
     }
 }
