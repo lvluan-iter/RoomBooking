@@ -114,7 +114,7 @@ public class PropertyController {
             if (!"00".equals(vnp_ResponseCode) || !"00".equals(vnp_TransactionStatus)) {
                 propertyService.deleteTempProperty(reference);
                 return ResponseEntity.status(HttpStatus.FOUND)
-                        .location(URI.create("/payment-result?status=error"))
+                        .location(URI.create("https://propertyweb.onrender.com/payment-result?status=error"))
                         .build();
             }
             try {
@@ -135,16 +135,16 @@ public class PropertyController {
                 detailService.createDetail(propertyRequest.getUserId(), vnp_OrderInfo, amount);
                 propertyService.deleteTempProperty(reference);
                 return ResponseEntity.status(HttpStatus.FOUND)
-                        .location(URI.create("/payment-result?status=success"))
+                        .location(URI.create("https://propertyweb.onrender.com/payment-result?status=success"))
                         .build();
             } catch (Exception e) {
                 return ResponseEntity.status(HttpStatus.FOUND)
-                        .location(URI.create("/payment-result?status=system-error"))
+                        .location(URI.create("https://propertyweb.onrender.com/payment-result?status=system-error"))
                         .build();
             }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(URI.create("/payment-result?status=system-error"))
+                    .location(URI.create("https://propertyweb.onrender.com/payment-result?status=system-error"))
                     .build();
         }
     }
