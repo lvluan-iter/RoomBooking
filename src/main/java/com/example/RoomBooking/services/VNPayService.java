@@ -25,44 +25,44 @@ public class VNPayService {
         String vnp_Version = "2.1.0";
         String vnp_Command = "pay";
         String orderType = "other";
-
+        String vnp_TxnRef = generateTransactionRef();
         long amount = FIXED_AMOUNT * 100;
-        String vnp_TxnRef = String.valueOf(property.getId());
 
-        String vnp_TmnCode = vnPayConfig.getTmnCode();
         Map<String, String> vnp_Params = new HashMap<>();
         vnp_Params.put("vnp_Version", vnp_Version);
         vnp_Params.put("vnp_Command", vnp_Command);
-        vnp_Params.put("vnp_TmnCode", vnp_TmnCode);
+        vnp_Params.put("vnp_TmnCode", vnPayConfig.getTmnCode());
         vnp_Params.put("vnp_Amount", String.valueOf(amount));
         vnp_Params.put("vnp_CurrCode", "VND");
-
-        String vnp_IpAddr = request.getRemoteAddr();
-        vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
-
-        String vnp_CreateDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-        vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
-
+        vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
         vnp_Params.put("vnp_OrderInfo", "Phi dang tin BDS: " + property.getTitle());
         vnp_Params.put("vnp_OrderType", orderType);
-        vnp_Params.put("vnp_ReturnUrl", "https://roombooking-fa3a.onrender.com/api/properties/payment-callback");
+        vnp_Params.put("vnp_Locale", "vn");
+        vnp_Params.put("vnp_ReturnUrl", vnPayConfig.getReturnUrl());
+        vnp_Params.put("vnp_IpAddr", getClientIpAddress(request));
+        vnp_Params.put("vnp_CreateDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
 
         List<String> fieldNames = new ArrayList<>(vnp_Params.keySet());
         Collections.sort(fieldNames);
+
         StringBuilder hashData = new StringBuilder();
         StringBuilder query = new StringBuilder();
-
         Iterator<String> itr = fieldNames.iterator();
+
         while (itr.hasNext()) {
             String fieldName = itr.next();
             String fieldValue = vnp_Params.get(fieldName);
-            if ((fieldValue != null) && (fieldValue.length() > 0)) {
+            if ((fieldValue != null) && !fieldValue.isEmpty()) {
+                // Add fieldName and fieldValue to hashData
                 hashData.append(fieldName);
                 hashData.append('=');
                 hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
+
+                // Add fieldName and fieldValue to query
                 query.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII.toString()));
                 query.append('=');
                 query.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
+
                 if (itr.hasNext()) {
                     query.append('&');
                     hashData.append('&');
@@ -75,6 +75,26 @@ public class VNPayService {
         queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
 
         return vnPayConfig.getPaymentUrl() + "?" + queryUrl;
+    }
+
+    private String generateTransactionRef() {
+        return String.format("%013d", System.currentTimeMillis()) +
+                String.format("%05d", new Random().nextInt(100000));
+    }
+
+    private String getClientIpAddress(HttpServletRequest request) {
+        String ipAddress = request.getHeader("X-Forwarded-For");
+        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+            ipAddress = request.getHeader("X-Real-IP");
+        }
+        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+            ipAddress = request.getRemoteAddr();
+        }
+        // If multiple IP addresses exist, take the first one
+        if (ipAddress != null && ipAddress.contains(",")) {
+            ipAddress = ipAddress.split(",")[0].trim();
+        }
+        return ipAddress != null ? ipAddress : "127.0.0.1";
     }
 
     private String hmacSHA512(String key, String data) {
