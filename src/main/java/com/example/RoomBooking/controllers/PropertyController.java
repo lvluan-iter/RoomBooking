@@ -126,6 +126,7 @@ public class PropertyController {
 
                 propertyRequest.setApproved(true);
                 propertyRequest.setPaid(true);
+                propertyRequest.setAvailable(true);
 
                 propertyService.addProperty(propertyRequest);
 
