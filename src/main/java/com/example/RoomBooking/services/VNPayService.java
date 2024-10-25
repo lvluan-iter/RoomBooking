@@ -22,33 +22,27 @@ public class VNPayService {
     private static final long FIXED_AMOUNT = 100000;
 
     public String createPaymentUrl(PropertyRequest propertyRequest, String reference, HttpServletRequest request) throws UnsupportedEncodingException {
-        String vnp_Version = "2.1.0";
-        String vnp_Command = "pay";
-        String orderType = "other";
-        String vnp_TxnRef = reference;
-        long amount = FIXED_AMOUNT * 100;
-
         Map<String, String> vnp_Params = new HashMap<>();
-        vnp_Params.put("vnp_Version", vnp_Version);
-        vnp_Params.put("vnp_Command", vnp_Command);
+        vnp_Params.put("vnp_Version", "2.1.0");
+        vnp_Params.put("vnp_Command", "pay");
         vnp_Params.put("vnp_TmnCode", vnPayConfig.getTmnCode());
-        vnp_Params.put("vnp_Amount", String.valueOf(amount));
+        vnp_Params.put("vnp_Amount", String.valueOf(FIXED_AMOUNT * 100));
+        vnp_Params.put("vnp_CreateDate", generateCreateDate());
         vnp_Params.put("vnp_CurrCode", "VND");
-        vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
-        vnp_Params.put("vnp_OrderInfo", "Phi dang tin BDS: " + propertyRequest.getTitle());
-        vnp_Params.put("vnp_OrderType", orderType);
-        vnp_Params.put("vnp_Locale", "vn");
-        vnp_Params.put("vnp_ReturnUrl", vnPayConfig.getReturnUrl());
         vnp_Params.put("vnp_IpAddr", getClientIpAddress(request));
-        vnp_Params.put("vnp_CreateDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+        vnp_Params.put("vnp_Locale", "vn");
+        vnp_Params.put("vnp_OrderInfo", "Thanh toan phi dang tin BDS: " + propertyRequest.getTitle());
+        vnp_Params.put("vnp_OrderType", "other");
+        vnp_Params.put("vnp_ReturnUrl", vnPayConfig.getReturnUrl());
+        vnp_Params.put("vnp_TxnRef", reference);
 
         List<String> fieldNames = new ArrayList<>(vnp_Params.keySet());
         Collections.sort(fieldNames);
 
         StringBuilder hashData = new StringBuilder();
         StringBuilder query = new StringBuilder();
-        Iterator<String> itr = fieldNames.iterator();
 
+        Iterator<String> itr = fieldNames.iterator();
         while (itr.hasNext()) {
             String fieldName = itr.next();
             String fieldValue = vnp_Params.get(fieldName);
@@ -70,30 +64,23 @@ public class VNPayService {
 
         String queryUrl = query.toString();
         String vnp_SecureHash = hmacSHA512(vnPayConfig.getHashSecret(), hashData.toString());
+
         queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
 
-        return vnPayConfig.getPaymentUrl() + "?" + queryUrl;
+        String finalUrl = vnPayConfig.getPaymentUrl() + "?" + queryUrl;
+
+        return finalUrl;
     }
 
-    private String getClientIpAddress(HttpServletRequest request) {
-        String ipAddress = request.getHeader("X-Forwarded-For");
-        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
-            ipAddress = request.getHeader("X-Real-IP");
-        }
-        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
-            ipAddress = request.getRemoteAddr();
-        }
-
-        if (ipAddress != null && ipAddress.contains(",")) {
-            ipAddress = ipAddress.split(",")[0].trim();
-        }
-        return ipAddress != null ? ipAddress : "127.0.0.1";
+    private String generateCreateDate() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+        return LocalDateTime.now().format(formatter);
     }
 
     private String hmacSHA512(String key, String data) {
         try {
             Mac sha512Hmac = Mac.getInstance("HmacSHA512");
-            byte[] hmacKeyBytes = key.getBytes();
+            byte[] hmacKeyBytes = key.getBytes(StandardCharsets.UTF_8);
             SecretKeySpec secretKey = new SecretKeySpec(hmacKeyBytes, "HmacSHA512");
             sha512Hmac.init(secretKey);
             byte[] dataBytes = data.getBytes(StandardCharsets.UTF_8);
@@ -104,7 +91,18 @@ public class VNPayService {
             }
             return sb.toString();
         } catch (Exception ex) {
-            return "";
+            throw new RuntimeException("Error generating HMAC SHA512", ex);
         }
+    }
+
+    private String getClientIpAddress(HttpServletRequest request) {
+        String ipAddress = request.getHeader("X-Forwarded-For");
+        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+            ipAddress = request.getRemoteAddr();
+        }
+        if (ipAddress != null && ipAddress.contains(",")) {
+            ipAddress = ipAddress.split(",")[0].trim();
+        }
+        return ipAddress;
     }
 }
