@@ -3,6 +3,7 @@ package com.example.RoomBooking.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -30,7 +31,6 @@ public class PropertyRequest {
     private boolean isLocked;
     private boolean isApproved;
     private String reason;
-    private LocalDateTime expirationDate;
 
     // Getters and Setters
     public String getTitle() {
@@ -200,13 +200,5 @@ public class PropertyRequest {
 
     public void setReason(String reason) {
         this.reason = reason;
-    }
-
-    public LocalDateTime getExpirationDate() {
-        return expirationDate;
-    }
-
-    public void setExpirationDate(LocalDateTime expirationDate) {
-        this.expirationDate = expirationDate;
     }
 }

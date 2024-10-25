@@ -23,12 +23,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/properties")
@@ -112,11 +110,10 @@ public class PropertyController {
                 responseUrl.put("paymentUrl", paymentUrl);
                 return ResponseEntity.ok(responseUrl);
             } else {
-                propertyRequest.setExpirationDate(LocalDateTime.now().plusDays(7));
                 propertyService.addProperty(propertyRequest);
-                Map<String, String> responseurl = new HashMap<>();
-                responseurl.put("message", "Đăng tin miễn phí thành công!");
-                return ResponseEntity.ok(responseurl);
+                Map<String, String> success = new HashMap<>();
+                success.put("message", "Đăng tin miễn phí thành công!");
+                return ResponseEntity.ok(success);
             }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -139,10 +136,11 @@ public class PropertyController {
                 Property property = new Property();
                 BeanUtils.copyProperties(tempProperty, property);
 
-                LocalDateTime now = LocalDateTime.now();
-                property.setCreatedAt(now);
-                property.setUpdatedAt(now);
-                property.setExpirationDate(now.plusDays(37));
+                property.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+                property.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
+                Calendar cal = Calendar.getInstance();
+                cal.add(Calendar.DAY_OF_MONTH, 37);
+                property.setExpirationDate(new Timestamp(cal.getTimeInMillis()));
                 property.setApproved(true);
                 property.setPaid(true);
 
@@ -150,7 +148,9 @@ public class PropertyController {
 
                 detailService.createDetail(savedProperty.getUser(), savedProperty, amount);
 
-                return ResponseEntity.ok("Thanh toán thành công!");
+                Map<String, String> success = new HashMap<>();
+                success.put("message", "Thanh toán thành công!");
+                return ResponseEntity.ok(success);
             } else {
                 return ResponseEntity.badRequest().body("Payment failed or invalid property data");
             }

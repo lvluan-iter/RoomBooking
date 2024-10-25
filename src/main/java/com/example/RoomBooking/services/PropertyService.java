@@ -16,6 +16,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.*;
@@ -91,9 +92,9 @@ public class PropertyService {
     @Transactional
     public void addProperty(PropertyRequest propertyRequest) {
         Property property = new Property();
-        property.setImages(new ArrayList<>()); // Initialize images list
-        property.setCreatedAt(LocalDateTime.now());
-        property.setUpdatedAt(LocalDateTime.now());
+        property.setImages(new ArrayList<>());
+        property.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+        property.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
         property.setVisits(0.0);
 
         updatePropertyFromRequest(property, propertyRequest);
@@ -119,7 +120,7 @@ public class PropertyService {
                 .orElseThrow(() -> new ResourceNotFoundException("Property not found with id: " + propertyId));
 
         updatePropertyFromRequest(property, propertyRequest);
-        property.setUpdatedAt(LocalDateTime.now());
+        property.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
 
         Property savedProperty = propertyRepository.save(property);
 
@@ -433,8 +434,8 @@ public class PropertyService {
         Property property = new Property();
         BeanUtils.copyProperties(propertyRequest, property);
         LocalDateTime now = LocalDateTime.now();
-        property.setCreatedAt(now);
-        property.setUpdatedAt(now);
+        property.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+        property.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
         return property;
     }
 }

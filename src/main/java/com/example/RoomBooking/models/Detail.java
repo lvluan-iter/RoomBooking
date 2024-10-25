@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 @Entity
@@ -25,9 +26,8 @@ public class Detail {
     @Column(name = "amount", nullable = false)
     private BigDecimal amount;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Column(name = "detail_date", nullable = false)
-    private LocalDateTime detailDate;
+    private Timestamp detailDate;
 
     public Detail() {
     }
@@ -36,7 +36,7 @@ public class Detail {
         this.user = user;
         this.property = property;
         this.amount = amount;
-        this.detailDate = LocalDateTime.now();
+        this.detailDate = new Timestamp(System.currentTimeMillis());
     }
 
     public Long getId() {
@@ -71,11 +71,11 @@ public class Detail {
         this.amount = amount;
     }
 
-    public LocalDateTime getDetailDate() {
+    public Timestamp getDetailDate() {
         return detailDate;
     }
 
-    public void setDetailDate(LocalDateTime detailDate) {
+    public void setDetailDate(Timestamp detailDate) {
         this.detailDate = detailDate;
     }
 }
