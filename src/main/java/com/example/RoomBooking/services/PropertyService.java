@@ -349,6 +349,10 @@ public class PropertyService {
                 .map(this::mapToNearbyPlaceDTO)
                 .collect(Collectors.toList()));
 
+        response.setExpirationDate(property.getExpirationDate());
+        response.setApproved(property.isApproved());
+        response.setPaid(property.isPaid());
+
         return response;
     }
 
@@ -407,7 +411,9 @@ public class PropertyService {
 
         updateImages(property, request.getImageUrls());
 
-        // Nearby places are handled separately in add and update methods
+        property.setExpirationDate(request.getExpirationDate());
+        property.setApproved(request.isApproved());
+        property.setPaid(request.isPaid());
     }
 
     private void updateImages(Property property, List<String> imageUrls) {

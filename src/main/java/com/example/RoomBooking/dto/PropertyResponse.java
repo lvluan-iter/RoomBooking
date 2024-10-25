@@ -30,6 +30,9 @@ public class PropertyResponse {
     private String type;
     private String keywords;
     private List<NearbyPlaceDTO> nearbyPlaces;
+    private Timestamp expirationDate;
+    private boolean isApproved;
+    private boolean isPaid;
 
     // Getters and Setters
     public Long getId() {
@@ -206,5 +209,29 @@ public class PropertyResponse {
 
     public void setNearbyPlaces(List<NearbyPlaceDTO> nearbyPlaces) {
         this.nearbyPlaces = nearbyPlaces;
+    }
+
+    public Timestamp getExpirationDate() {
+        return expirationDate;
+    }
+
+    public void setExpirationDate(Timestamp expirationDate) {
+        this.expirationDate = expirationDate;
+    }
+
+    public boolean isApproved() {
+        return isApproved;
+    }
+
+    public void setApproved(boolean approved) {
+        isApproved = approved;
+    }
+
+    public boolean isPaid() {
+        return isPaid;
+    }
+
+    public void setPaid(boolean paid) {
+        isPaid = paid;
     }
 }
