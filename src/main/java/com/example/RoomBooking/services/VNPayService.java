@@ -1,7 +1,7 @@
 package com.example.RoomBooking.services;
 
 import com.example.RoomBooking.config.VNPayConfig;
-import com.example.RoomBooking.models.Property;
+import com.example.RoomBooking.dto.PropertyRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,11 +21,11 @@ public class VNPayService {
     private VNPayConfig vnPayConfig;
     private static final long FIXED_AMOUNT = 100000;
 
-    public String createPaymentUrl(Property property, HttpServletRequest request) throws UnsupportedEncodingException {
+    public String createPaymentUrl(PropertyRequest propertyRequest, String reference, HttpServletRequest request) throws UnsupportedEncodingException {
         String vnp_Version = "2.1.0";
         String vnp_Command = "pay";
         String orderType = "other";
-        String vnp_TxnRef = generateTransactionRef();
+        String vnp_TxnRef = reference;
         long amount = FIXED_AMOUNT * 100;
 
         Map<String, String> vnp_Params = new HashMap<>();
@@ -35,7 +35,7 @@ public class VNPayService {
         vnp_Params.put("vnp_Amount", String.valueOf(amount));
         vnp_Params.put("vnp_CurrCode", "VND");
         vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
-        vnp_Params.put("vnp_OrderInfo", "Phi dang tin BDS: " + property.getTitle());
+        vnp_Params.put("vnp_OrderInfo", "Phi dang tin BDS: " + propertyRequest.getTitle());
         vnp_Params.put("vnp_OrderType", orderType);
         vnp_Params.put("vnp_Locale", "vn");
         vnp_Params.put("vnp_ReturnUrl", vnPayConfig.getReturnUrl());
@@ -53,12 +53,10 @@ public class VNPayService {
             String fieldName = itr.next();
             String fieldValue = vnp_Params.get(fieldName);
             if ((fieldValue != null) && !fieldValue.isEmpty()) {
-                // Add fieldName and fieldValue to hashData
                 hashData.append(fieldName);
                 hashData.append('=');
                 hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
 
-                // Add fieldName and fieldValue to query
                 query.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII.toString()));
                 query.append('=');
                 query.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
@@ -77,11 +75,6 @@ public class VNPayService {
         return vnPayConfig.getPaymentUrl() + "?" + queryUrl;
     }
 
-    private String generateTransactionRef() {
-        return String.format("%013d", System.currentTimeMillis()) +
-                String.format("%05d", new Random().nextInt(100000));
-    }
-
     private String getClientIpAddress(HttpServletRequest request) {
         String ipAddress = request.getHeader("X-Forwarded-For");
         if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
@@ -90,7 +83,7 @@ public class VNPayService {
         if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
             ipAddress = request.getRemoteAddr();
         }
-        // If multiple IP addresses exist, take the first one
+
         if (ipAddress != null && ipAddress.contains(",")) {
             ipAddress = ipAddress.split(",")[0].trim();
         }

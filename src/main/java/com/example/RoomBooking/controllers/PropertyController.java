@@ -78,7 +78,6 @@ public class PropertyController {
             Page<PropertyResponse> properties = propertyService.searchNearBy(location, propertyId, pageable);
             return ResponseEntity.ok(properties);
         } catch (RuntimeException e) {
-            // Trả về một ResponseEntity với HttpStatus.BAD_REQUEST và thông báo lỗi dưới dạng JSON
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ErrorResponse("Error: " + e.getMessage()));
         }
@@ -91,28 +90,20 @@ public class PropertyController {
     }
 
     @PostMapping
-    public ResponseEntity<?> addProperty(@RequestBody PropertyRequest propertyRequest,
-                                         HttpServletRequest request,
-                                         HttpServletResponse response) {
+    public ResponseEntity<?> addProperty(@RequestBody PropertyRequest propertyRequest, HttpServletRequest request) {
         try {
             if (propertyRequest.isPaid()) {
-                Property tempProperty = propertyService.createTempProperty(propertyRequest);
-                String propertyJson = new ObjectMapper().writeValueAsString(tempProperty);
-                Cookie cookie = new Cookie("temp_property", Base64.getEncoder().encodeToString(propertyJson.getBytes()));
-                cookie.setMaxAge(30 * 60);
-                cookie.setPath("/");
-                response.addCookie(cookie);
+                String reference = propertyService.createTempPropertyAndGetRef(propertyRequest);
 
-                String paymentUrl = vnPayService.createPaymentUrl(tempProperty, request);
+                String paymentUrl = vnPayService.createPaymentUrl(propertyRequest, reference, request);
 
-                Map<String, String> responseUrl = new HashMap<>();
-                responseUrl.put("paymentUrl", paymentUrl);
-                return ResponseEntity.ok(responseUrl);
+                Map<String, String> response = new HashMap<>();
+                response.put("paymentUrl", paymentUrl);
+                response.put("reference", reference);
+                return ResponseEntity.ok(response);
             } else {
                 propertyService.addProperty(propertyRequest);
-                Map<String, String> success = new HashMap<>();
-                success.put("message", "Đăng tin miễn phí thành công!");
-                return ResponseEntity.ok(success);
+                return ResponseEntity.ok(Map.of("message", "Đăng tin miễn phí thành công!"));
             }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -121,88 +112,49 @@ public class PropertyController {
     }
 
     @GetMapping("/payment-callback")
-    public ResponseEntity<?> paymentCallback(
-            @RequestParam Map<String, String> queryParams,
-            @CookieValue(name = "temp_property", required = false) String tempPropertyCookie,
-            HttpServletResponse response) {
+    public ResponseEntity<?> paymentCallback(@RequestParam Map<String, String> queryParams) {
         try {
-            // Log incoming parameters
-            System.out.println("Received callback parameters: " + queryParams);
-            System.out.println("Temp property cookie: " + tempPropertyCookie);
-
             String vnp_ResponseCode = queryParams.get("vnp_ResponseCode");
             String vnp_TransactionStatus = queryParams.get("vnp_TransactionStatus");
+            String reference = queryParams.get("vnp_TxnRef");
 
-            // Validate response code and transaction status
             if (!"00".equals(vnp_ResponseCode) || !"00".equals(vnp_TransactionStatus)) {
+                propertyService.deleteTempProperty(reference);
                 return ResponseEntity.badRequest()
                         .body(new ErrorResponse("Payment failed. Response code: " + vnp_ResponseCode));
             }
 
-            // Validate the temp property exists
-            if (tempPropertyCookie == null || tempPropertyCookie.isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(new ErrorResponse("No temporary property data found"));
-            }
-
             try {
-                // Decode the cookie
-                byte[] decodedBytes = Base64.getDecoder().decode(tempPropertyCookie);
-                String propertyJson = new String(decodedBytes);
+                Property tempProperty = propertyService.getTempProperty(reference);
 
-                System.out.println("Decoded property JSON: " + propertyJson);
+                tempProperty.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+                tempProperty.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
 
-                ObjectMapper mapper = new ObjectMapper();
-                PropertyRequest tempProperty = mapper.readValue(propertyJson, PropertyRequest.class);
-
-                // Create and save the property
-                Property property = new Property();
-                BeanUtils.copyProperties(tempProperty, property);
-
-                // Set additional properties
-                property.setCreatedAt(new Timestamp(System.currentTimeMillis()));
-                property.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
-
-                // Set expiration date to 37 days from now
                 Calendar cal = Calendar.getInstance();
                 cal.add(Calendar.DAY_OF_MONTH, 37);
-                property.setExpirationDate(new Timestamp(cal.getTimeInMillis()));
+                tempProperty.setExpirationDate(new Timestamp(cal.getTimeInMillis()));
 
-                property.setApproved(true);
-                property.setPaid(true);
+                tempProperty.setApproved(true);
+                tempProperty.setPaid(true);
 
-                // Save the property
-                Property savedProperty = propertyRepository.save(property);
+                Property savedProperty = propertyRepository.save(tempProperty);
 
-                // Calculate amount from VNPay response
                 BigDecimal amount = new BigDecimal(queryParams.get("vnp_Amount"))
                         .divide(new BigDecimal(100));
 
-                // Create detail record
                 detailService.createDetail(savedProperty.getUser(), savedProperty, amount);
+                propertyService.deleteTempProperty(reference);
 
-                // Clear the temporary property cookie
-                Cookie cookie = new Cookie("temp_property", null);
-                cookie.setMaxAge(0);
-                cookie.setPath("/");
-                response.addCookie(cookie);
-
-                Map<String, String> success = new HashMap<>();
-                success.put("message", "Thanh toán thành công!");
-                return ResponseEntity.ok(success);
+                return ResponseEntity.ok(Map.of("message", "Thanh toán thành công!"));
 
             } catch (Exception e) {
-                System.err.println("Error processing property data: " + e.getMessage());
-                e.printStackTrace();
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(new ErrorResponse("Error processing property data: " + e.getMessage()));
             }
 
         } catch (Exception e) {
-            System.err.println("Error in payment callback: " + e.getMessage());
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ErrorResponse("Error processing payment callback: " + e.getMessage()));
+                    .body(new ErrorResponse("Error in payment callback: " + e.getMessage()));
         }
     }
 

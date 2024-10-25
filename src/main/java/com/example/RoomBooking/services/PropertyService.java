@@ -5,6 +5,7 @@ import com.example.RoomBooking.exceptions.ResourceNotFoundException;
 import com.example.RoomBooking.models.*;
 import com.example.RoomBooking.repositories.*;
 import com.example.RoomBooking.specifications.PropertySpecifications;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.lettuce.core.RedisCommandExecutionException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.BeanUtils;
@@ -49,6 +50,12 @@ public class PropertyService {
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
+
+    private static final String TEMP_PROPERTY_PREFIX = "temp_property:";
+    private static final int TEMP_PROPERTY_EXPIRY = 30;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     public Page<PropertyResponse> getAvailableProperties(Pageable pageable) {
         return propertyRepository.findByIsAvailableTrue(pageable).map(this::mapToResponse);
@@ -430,12 +437,44 @@ public class PropertyService {
                 .collect(Collectors.toList());
     }
 
-    public Property createTempProperty(PropertyRequest propertyRequest) {
-        Property property = new Property();
-        BeanUtils.copyProperties(propertyRequest, property);
-        LocalDateTime now = LocalDateTime.now();
-        property.setCreatedAt(new Timestamp(System.currentTimeMillis()));
-        property.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
-        return property;
+    public String createTempPropertyAndGetRef(PropertyRequest propertyRequest) {
+        try {
+            Property tempProperty = new Property();
+            BeanUtils.copyProperties(propertyRequest, tempProperty);
+
+            String reference = generateUniqueReference();
+
+            String propertyJson = objectMapper.writeValueAsString(tempProperty);
+            String redisKey = TEMP_PROPERTY_PREFIX + reference;
+            redisTemplate.opsForValue().set(redisKey, propertyJson, TEMP_PROPERTY_EXPIRY, TimeUnit.MINUTES);
+
+            return reference;
+        } catch (Exception e) {
+            throw new RuntimeException("Error creating temporary property", e);
+        }
+    }
+
+    public Property getTempProperty(String reference) {
+        try {
+            String redisKey = TEMP_PROPERTY_PREFIX + reference;
+            String propertyJson = redisTemplate.opsForValue().get(redisKey);
+
+            if (propertyJson == null) {
+                throw new ResourceNotFoundException("Temporary property not found or expired");
+            }
+
+            return objectMapper.readValue(propertyJson, Property.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Error retrieving temporary property", e);
+        }
+    }
+
+    public void deleteTempProperty(String reference) {
+        String redisKey = TEMP_PROPERTY_PREFIX + reference;
+        redisTemplate.delete(redisKey);
+    }
+
+    private String generateUniqueReference() {
+        return UUID.randomUUID().toString();
     }
 }
