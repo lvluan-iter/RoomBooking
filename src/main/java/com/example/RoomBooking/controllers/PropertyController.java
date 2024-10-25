@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
+import java.net.URI;
 import java.sql.Timestamp;
 import java.time.YearMonth;
 import java.util.*;
@@ -112,10 +113,10 @@ public class PropertyController {
 
             if (!"00".equals(vnp_ResponseCode) || !"00".equals(vnp_TransactionStatus)) {
                 propertyService.deleteTempProperty(reference);
-                return ResponseEntity.badRequest()
-                        .body(new ErrorResponse("Payment failed. Response code: " + vnp_ResponseCode));
+                return ResponseEntity.status(HttpStatus.FOUND)
+                        .location(URI.create("/payment-result?status=error"))
+                        .build();
             }
-
             try {
                 PropertyRequest propertyRequest = propertyService.getTempProperty(reference);
 
@@ -133,16 +134,18 @@ public class PropertyController {
 
                 detailService.createDetail(propertyRequest.getUserId(), vnp_OrderInfo, amount);
                 propertyService.deleteTempProperty(reference);
-                return ResponseEntity.ok(Map.of("message", "Thanh toán thành công!"));
-
+                return ResponseEntity.status(HttpStatus.FOUND)
+                        .location(URI.create("/payment-result?status=success"))
+                        .build();
             } catch (Exception e) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(new ErrorResponse("Error processing property data: " + e.getMessage()));
+                return ResponseEntity.status(HttpStatus.FOUND)
+                        .location(URI.create("/payment-result?status=system-error"))
+                        .build();
             }
-
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ErrorResponse("Error in payment callback: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(URI.create("/payment-result?status=system-error"))
+                    .build();
         }
     }
 
