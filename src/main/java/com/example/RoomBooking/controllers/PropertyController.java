@@ -121,41 +121,88 @@ public class PropertyController {
     }
 
     @GetMapping("/payment-callback")
-    public ResponseEntity<?> paymentCallback(@RequestParam Map<String, String> queryParams,
-                                             @CookieValue(name = "temp_property", required = false) String tempPropertyCookie) {
+    public ResponseEntity<?> paymentCallback(
+            @RequestParam Map<String, String> queryParams,
+            @CookieValue(name = "temp_property", required = false) String tempPropertyCookie,
+            HttpServletResponse response) {
         try {
-            String vnp_ResponseCode = queryParams.get("vnp_ResponseCode");
-            BigDecimal amount = new BigDecimal(queryParams.get("vnp_Amount")).divide(new BigDecimal(100));
+            // Log incoming parameters
+            System.out.println("Received callback parameters: " + queryParams);
+            System.out.println("Temp property cookie: " + tempPropertyCookie);
 
-            if ("00".equals(vnp_ResponseCode) && tempPropertyCookie != null) {
+            String vnp_ResponseCode = queryParams.get("vnp_ResponseCode");
+            String vnp_TransactionStatus = queryParams.get("vnp_TransactionStatus");
+
+            // Validate response code and transaction status
+            if (!"00".equals(vnp_ResponseCode) || !"00".equals(vnp_TransactionStatus)) {
+                return ResponseEntity.badRequest()
+                        .body(new ErrorResponse("Payment failed. Response code: " + vnp_ResponseCode));
+            }
+
+            // Validate the temp property exists
+            if (tempPropertyCookie == null || tempPropertyCookie.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(new ErrorResponse("No temporary property data found"));
+            }
+
+            try {
+                // Decode the cookie
                 byte[] decodedBytes = Base64.getDecoder().decode(tempPropertyCookie);
                 String propertyJson = new String(decodedBytes);
-                PropertyRequest tempProperty = new ObjectMapper().readValue(propertyJson, PropertyRequest.class);
 
+                System.out.println("Decoded property JSON: " + propertyJson);
+
+                ObjectMapper mapper = new ObjectMapper();
+                PropertyRequest tempProperty = mapper.readValue(propertyJson, PropertyRequest.class);
+
+                // Create and save the property
                 Property property = new Property();
                 BeanUtils.copyProperties(tempProperty, property);
 
+                // Set additional properties
                 property.setCreatedAt(new Timestamp(System.currentTimeMillis()));
                 property.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
+
+                // Set expiration date to 37 days from now
                 Calendar cal = Calendar.getInstance();
                 cal.add(Calendar.DAY_OF_MONTH, 37);
                 property.setExpirationDate(new Timestamp(cal.getTimeInMillis()));
+
                 property.setApproved(true);
                 property.setPaid(true);
 
+                // Save the property
                 Property savedProperty = propertyRepository.save(property);
 
+                // Calculate amount from VNPay response
+                BigDecimal amount = new BigDecimal(queryParams.get("vnp_Amount"))
+                        .divide(new BigDecimal(100));
+
+                // Create detail record
                 detailService.createDetail(savedProperty.getUser(), savedProperty, amount);
+
+                // Clear the temporary property cookie
+                Cookie cookie = new Cookie("temp_property", null);
+                cookie.setMaxAge(0);
+                cookie.setPath("/");
+                response.addCookie(cookie);
 
                 Map<String, String> success = new HashMap<>();
                 success.put("message", "Thanh toán thành công!");
                 return ResponseEntity.ok(success);
-            } else {
-                return ResponseEntity.badRequest().body("Payment failed or invalid property data");
+
+            } catch (Exception e) {
+                System.err.println("Error processing property data: " + e.getMessage());
+                e.printStackTrace();
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(new ErrorResponse("Error processing property data: " + e.getMessage()));
             }
+
         } catch (Exception e) {
+            System.err.println("Error in payment callback: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error processing payment callback: " + e.getMessage());
+                    .body(new ErrorResponse("Error processing payment callback: " + e.getMessage()));
         }
     }
 
