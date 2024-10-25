@@ -43,7 +43,7 @@ public class VNPayService {
         String vnp_CreateDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
         vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
 
-        vnp_Params.put("vnp_OrderInfo", "Phi dang tin BDS ID: " + property.getId());
+        vnp_Params.put("vnp_OrderInfo", "Phi dang tin BDS: " + property.getTitle());
         vnp_Params.put("vnp_OrderType", orderType);
         vnp_Params.put("vnp_ReturnUrl", "https://roombooking-fa3a.onrender.com/api/properties/payment-callback");
 

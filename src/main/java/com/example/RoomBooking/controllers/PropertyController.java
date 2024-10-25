@@ -95,7 +95,6 @@ public class PropertyController {
                                          HttpServletRequest request,
                                          HttpServletResponse response) {
         try {
-            System.out.println("isPaid value: " + propertyRequest.isPaid());
             if (propertyRequest.isPaid()) {
                 Property tempProperty = propertyService.createTempProperty(propertyRequest);
                 String propertyJson = new ObjectMapper().writeValueAsString(tempProperty);
