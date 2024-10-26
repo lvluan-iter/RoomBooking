@@ -17,8 +17,12 @@ public class VNPayConfig {
     @Value("${vnpay.return-url}")
     private String returnUrl;
 
+    @Value("${vnpay.return-Eurl}")
+    private String returnEUrl;
+
     public String getTmnCode() { return tmnCode; }
     public String getHashSecret() { return hashSecret; }
     public String getPaymentUrl() { return paymentUrl; }
     public String getReturnUrl() { return returnUrl; }
+    public String getReturnEUrl() { return returnEUrl; }
 }

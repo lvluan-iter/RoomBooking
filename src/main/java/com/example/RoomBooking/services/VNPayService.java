@@ -2,7 +2,9 @@ package com.example.RoomBooking.services;
 
 import com.example.RoomBooking.config.VNPayConfig;
 import com.example.RoomBooking.dto.PropertyRequest;
+import com.example.RoomBooking.exceptions.ResourceNotFoundException;
 import com.example.RoomBooking.models.Property;
+import com.example.RoomBooking.repositories.PropertyRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,8 @@ public class VNPayService {
     @Autowired
     private final VNPayConfig vnPayConfig;
     private static final long FIXED_AMOUNT = 100000;
+
+    private PropertyRepository propertyRepository;
 
     public VNPayService(VNPayConfig vnPayConfig) {
         this.vnPayConfig = vnPayConfig;
@@ -74,7 +78,10 @@ public class VNPayService {
         return vnPayConfig.getPaymentUrl() + "?" + queryUrl;
     }
 
-    public String createExtensionPaymentUrl(Property property, String reference, HttpServletRequest request) {
+    public String createExtensionPaymentUrl(Long propertyId, String reference, HttpServletRequest request) {
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Property not found with id: " + propertyId));
+
         Map<String, String> vnp_Params = new HashMap<>();
         vnp_Params.put("vnp_Version", "2.1.0");
         vnp_Params.put("vnp_Command", "pay");
@@ -84,15 +91,11 @@ public class VNPayService {
         vnp_Params.put("vnp_CurrCode", "VND");
         vnp_Params.put("vnp_IpAddr", getClientIpAddress(request));
         vnp_Params.put("vnp_Locale", "vn");
-        vnp_Params.put("vnp_OrderInfo", "Gia han tin BDS: " + property.getTitle());
-        vnp_Params.put("vnp_OrderType", "other");
-        vnp_Params.put("vnp_ReturnUrl", vnPayConfig.getReturnUrl());
+        vnp_Params.put("vnp_OrderInfo", "Gia han BDS: " + property.getTitle());
+        vnp_Params.put("vnp_OrderType", "extension");
+        vnp_Params.put("vnp_ReturnUrl", vnPayConfig.getReturnEUrl());
         vnp_Params.put("vnp_TxnRef", reference);
 
-        return createPaymentUrl(vnp_Params);
-    }
-
-    private String createPaymentUrl(Map<String, String> vnp_Params) {
         List<String> fieldNames = new ArrayList<>(vnp_Params.keySet());
         Collections.sort(fieldNames);
 
@@ -121,6 +124,7 @@ public class VNPayService {
 
         String queryUrl = query.toString();
         String vnp_SecureHash = hmacSHA512(vnPayConfig.getHashSecret(), hashData.toString());
+
         queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
 
         return vnPayConfig.getPaymentUrl() + "?" + queryUrl;

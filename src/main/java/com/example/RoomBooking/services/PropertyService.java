@@ -8,7 +8,6 @@ import com.example.RoomBooking.specifications.PropertySpecifications;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.lettuce.core.RedisCommandExecutionException;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -391,10 +390,8 @@ public class PropertyService {
 
         if (request.getAmenities() != null) {
             List<Amenity> amenities = request.getAmenities().stream()
-                    .map(amenityDto -> {
-                        return amenityRepository.findById(amenityDto.getId())
-                                .orElseThrow(() -> new ResourceNotFoundException("Amenity not found with id: " + amenityDto.getId()));
-                    })
+                    .map(amenityDto -> amenityRepository.findById(amenityDto.getId())
+                            .orElseThrow(() -> new ResourceNotFoundException("Amenity not found with id: " + amenityDto.getId())))
                     .collect(Collectors.toList());
             property.setAmenities(amenities);
         } else {
@@ -430,7 +427,7 @@ public class PropertyService {
                         image.setProperty(property);
                         return image;
                     })
-                    .collect(Collectors.toList());
+                    .toList();
             property.getImages().addAll(newImages);
         }
     }
@@ -466,8 +463,7 @@ public class PropertyService {
                 throw new ResourceNotFoundException("Temporary property not found or expired");
             }
 
-            PropertyRequest propertyRequest = objectMapper.readValue(propertyJson, PropertyRequest.class);
-            return propertyRequest;
+            return objectMapper.readValue(propertyJson, PropertyRequest.class);
         } catch (Exception e) {
             throw new RuntimeException("Error retrieving temporary property", e);
         }
@@ -493,56 +489,21 @@ public class PropertyService {
         propertyRepository.save(property);
     }
 
-    public String createExtensionReference(Long propertyId) {
-        String reference = "EXT_" + generateUniqueReference();
-        String redisKey = "extension:" + reference;
-        redisTemplate.opsForValue().set(redisKey, propertyId.toString(), 30, TimeUnit.MINUTES);
-        return reference;
-    }
-
-    public void deleteExtensionReference(String reference) {
-        String redisKey = "extension:" + reference;
-        redisTemplate.delete(redisKey);
-    }
-
-    public Long getPropertyIdFromExtensionReference(String reference) {
-        String redisKey = "extension:" + reference;
-        String propertyId = redisTemplate.opsForValue().get(redisKey);
-        if (propertyId == null) {
-            throw new ResourceNotFoundException("Extension reference not found or expired");
-        }
-        return Long.parseLong(propertyId);
-    }
-
-    public Long getUserIdFromReference(String reference) {
-        if (reference.startsWith("EXT_")) {
-            Long propertyId = getPropertyIdFromExtensionReference(reference);
-            Property property = propertyRepository.findById(propertyId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
-            return property.getUser().getId();
-        } else {
-            PropertyRequest propertyRequest = getTempProperty(reference);
-            return propertyRequest.getUserId();
-        }
-    }
-
     @Transactional
-    public void extendProperty(Long propertyId) {
+    public void processExtension(Long propertyId) {
         Property property = propertyRepository.findById(propertyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Property not found with id: " + propertyId));
 
-        Calendar cal = Calendar.getInstance();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime currentExpiration = property.getExpirationDate().toLocalDateTime();
 
-        if (property.getExpirationDate().before(new Timestamp(cal.getTimeInMillis()))) {
-            cal.add(Calendar.DAY_OF_MONTH, 30);
-        } else {
-            cal.setTimeInMillis(property.getExpirationDate().getTime());
-            cal.add(Calendar.DAY_OF_MONTH, 30);
-        }
+        LocalDateTime newExpirationDate = currentExpiration.isBefore(now)
+                ? now.plusDays(30)
+                : currentExpiration.plusDays(30);
 
-        property.setExpirationDate(new Timestamp(cal.getTimeInMillis()));
-        property.setPaid(true);
+        property.setExpirationDate(Timestamp.valueOf(newExpirationDate));
         property.setApproved(true);
+        property.setPaid(true);
         property.setAvailable(true);
         property.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
 

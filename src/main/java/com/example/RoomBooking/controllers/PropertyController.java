@@ -12,33 +12,44 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.net.URI;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.time.YearMonth;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/api/properties")
 public class PropertyController {
 
     @Autowired
-    private PropertyService propertyService;
+    private final PropertyService propertyService;
 
     @Autowired
-    private VNPayService vnPayService;
+    private final VNPayService vnPayService;
 
     @Autowired
-    private DetailService detailService;
+    private final DetailService detailService;
 
     @Autowired
-    private PropertyRepository propertyRepository;
+    private final PropertyRepository propertyRepository;
+
+    @Autowired
+    private final RedisTemplate<String, String> redisTemplate;
+
+    public PropertyController(PropertyService propertyService, VNPayService vnPayService, DetailService detailService, PropertyRepository propertyRepository, RedisTemplate<String, String> redisTemplate) {
+        this.propertyService = propertyService;
+        this.vnPayService = vnPayService;
+        this.detailService = detailService;
+        this.propertyRepository = propertyRepository;
+        this.redisTemplate = redisTemplate;
+    }
 
     @GetMapping("/available")
     public ResponseEntity<Page<PropertyResponse>> getAvailableProperties(
@@ -107,25 +118,6 @@ public class PropertyController {
         }
     }
 
-    @PostMapping("/{propertyId}/extend")
-    public ResponseEntity<?> extendProperty(@PathVariable Long propertyId, HttpServletRequest request) {
-        try {
-            Property property = propertyRepository.findById(propertyId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Property not found with id: " + propertyId));
-
-            String reference = propertyService.createExtensionReference(propertyId);
-            String paymentUrl = vnPayService.createExtensionPaymentUrl(property, reference, request);
-
-            Map<String, String> response = new HashMap<>();
-            response.put("paymentUrl", paymentUrl);
-            response.put("reference", reference);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error processing property extension: " + e.getMessage());
-        }
-    }
-
     @GetMapping("/payment-callback")
     public ResponseEntity<?> paymentCallback(@RequestParam Map<String, String> queryParams) {
         try {
@@ -135,56 +127,105 @@ public class PropertyController {
             String reference = queryParams.get("vnp_TxnRef");
 
             if (!"00".equals(vnp_ResponseCode) || !"00".equals(vnp_TransactionStatus)) {
-                if (reference.startsWith("EXT_")) {
-                    propertyService.deleteExtensionReference(reference);
-                } else {
-                    propertyService.deleteTempProperty(reference);
-                }
+                propertyService.deleteTempProperty(reference);
+                return ResponseEntity.status(HttpStatus.FOUND)
+                        .location(URI.create("https://propertyweb.onrender.com/payment-result?status=error"))
+                        .build();
+            }
+            try {
+                PropertyRequest propertyRequest = propertyService.getTempProperty(reference);
+
+                Calendar cal = Calendar.getInstance();
+                cal.add(Calendar.DAY_OF_MONTH, 37);
+                propertyRequest.setExpirationDate(new Timestamp(cal.getTimeInMillis()));
+
+                propertyRequest.setApproved(true);
+                propertyRequest.setPaid(true);
+                propertyRequest.setAvailable(true);
+
+                propertyService.addProperty(propertyRequest);
+
+                BigDecimal amount = new BigDecimal(queryParams.get("vnp_Amount"))
+                        .divide(new BigDecimal(100));
+
+                detailService.createDetail(propertyRequest.getUserId(), vnp_OrderInfo, amount);
+                propertyService.deleteTempProperty(reference);
+                return ResponseEntity.status(HttpStatus.FOUND)
+                        .location(URI.create("https://propertyweb.onrender.com/payment-result?status=success"))
+                        .build();
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.FOUND)
+                        .location(URI.create("https://propertyweb.onrender.com/payment-result?status=system-error"))
+                        .build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(URI.create("https://propertyweb.onrender.com/payment-result?status=system-error"))
+                    .build();
+        }
+    }
+
+    @PostMapping("/{propertyId}/extend")
+    public ResponseEntity<?> extendProperty(@PathVariable Long propertyId, HttpServletRequest request) {
+        try {
+            String reference = UUID.randomUUID().toString();
+            String paymentUrl = vnPayService.createExtensionPaymentUrl(propertyId, reference, request);
+
+            // Store propertyId in Redis for verification during callback
+            String redisKey = "extension:" + reference;
+            redisTemplate.opsForValue().set(redisKey, propertyId.toString(), 30, TimeUnit.MINUTES);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("paymentUrl", paymentUrl);
+            response.put("reference", reference);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error processing extension: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/extension-callback")
+    public ResponseEntity<?> extensionCallback(@RequestParam Map<String, String> queryParams) {
+        try {
+            String vnp_ResponseCode = queryParams.get("vnp_ResponseCode");
+            String vnp_TransactionStatus = queryParams.get("vnp_TransactionStatus");
+            String vnp_OrderInfo = queryParams.get("vnp_OrderInfo");
+            String reference = queryParams.get("vnp_TxnRef");
+
+            if (!"00".equals(vnp_ResponseCode) || !"00".equals(vnp_TransactionStatus)) {
                 return ResponseEntity.status(HttpStatus.FOUND)
                         .location(URI.create("https://propertyweb.onrender.com/payment-result?status=error"))
                         .build();
             }
 
-            try {
-                if (reference.startsWith("EXT_")) {
-                    Long propertyId = propertyService.getPropertyIdFromExtensionReference(reference);
-                    propertyService.extendProperty(propertyId);
-                    propertyService.deleteExtensionReference(reference);
-                } else {
-                    PropertyRequest propertyRequest = propertyService.getTempProperty(reference);
+            String redisKey = "extension:" + reference;
+            String propertyIdStr = redisTemplate.opsForValue().get(redisKey);
 
-                    Calendar cal = Calendar.getInstance();
-                    cal.add(Calendar.DAY_OF_MONTH, 37);
-                    propertyRequest.setExpirationDate(new Timestamp(cal.getTimeInMillis()));
-
-                    propertyRequest.setApproved(true);
-                    propertyRequest.setPaid(true);
-                    propertyRequest.setAvailable(true);
-
-                    propertyService.addProperty(propertyRequest);
-                    propertyService.deleteTempProperty(reference);
-                }
-
-                BigDecimal amount = new BigDecimal(queryParams.get("vnp_Amount"))
-                        .divide(new BigDecimal(100));
-
-                detailService.createDetail(propertyService.getUserIdFromReference(reference),
-                        vnp_OrderInfo,
-                        amount);
-
+            if (propertyIdStr == null) {
                 return ResponseEntity.status(HttpStatus.FOUND)
-                        .location(URI.create("https://propertyweb.onrender.com/payment-result?status=success"))
-                        .build();
-            } catch (Exception e) {
-                String errorMessage = "Lỗi hệ thống: " + e.getMessage();
-                return ResponseEntity.status(HttpStatus.FOUND)
-                        .location(URI.create("https://propertyweb.onrender.com/payment-result?status=system-error&message=" +
-                                URLEncoder.encode(errorMessage, StandardCharsets.UTF_8)))
+                        .location(URI.create("https://propertyweb.onrender.com/payment-result?status=error"))
                         .build();
             }
+
+            Long propertyId = Long.parseLong(propertyIdStr);
+            propertyService.processExtension(propertyId);
+
+            // Create payment detail record
+            BigDecimal amount = new BigDecimal(queryParams.get("vnp_Amount"))
+                    .divide(new BigDecimal(100));
+            Property property = propertyRepository.findById(propertyId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
+            detailService.createDetail(property.getUser().getId(), vnp_OrderInfo, amount);
+
+            redisTemplate.delete(redisKey);
+
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(URI.create("https://propertyweb.onrender.com/payment-result?status=success"))
+                    .build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(URI.create("https://propertyweb.onrender.com/payment-result?status=system-error&message="))
+                    .location(URI.create("https://propertyweb.onrender.com/payment-result?status=system-error"))
                     .build();
         }
     }
@@ -237,4 +278,3 @@ public class PropertyController {
         }
     }
 }
-
