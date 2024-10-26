@@ -231,13 +231,13 @@ public class PropertyController {
     @PutMapping("/{propertyId}")
     public ResponseEntity<?> updateProperty(@PathVariable Long propertyId, @RequestBody PropertyRequest propertyRequest) {
         propertyService.updateProperty(propertyId, propertyRequest);
-        return ResponseEntity.ok("Property updated successfully.");
+        return ResponseEntity.ok(Map.of("message", "Chỉnh sửa thông tin thành công!"));
     }
 
     @DeleteMapping("/{propertyId}")
     public ResponseEntity<?> deleteProperty(@PathVariable Long propertyId) {
         propertyService.deleteProperty(propertyId);
-        return ResponseEntity.ok("Property deleted successfully.");
+        return ResponseEntity.ok(Map.of("message", "Xóa bất động sản thành công!"));
     }
 
     @GetMapping("/quick-stats/{userId}")
