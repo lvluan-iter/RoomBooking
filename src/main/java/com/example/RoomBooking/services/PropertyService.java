@@ -492,4 +492,60 @@ public class PropertyService {
 
         propertyRepository.save(property);
     }
+
+    public String createExtensionReference(Long propertyId) {
+        String reference = "EXT_" + generateUniqueReference();
+        String redisKey = "extension:" + reference;
+        redisTemplate.opsForValue().set(redisKey, propertyId.toString(), 30, TimeUnit.MINUTES);
+        return reference;
+    }
+
+    public void deleteExtensionReference(String reference) {
+        String redisKey = "extension:" + reference;
+        redisTemplate.delete(redisKey);
+    }
+
+    public Long getPropertyIdFromExtensionReference(String reference) {
+        String redisKey = "extension:" + reference;
+        String propertyId = redisTemplate.opsForValue().get(redisKey);
+        if (propertyId == null) {
+            throw new ResourceNotFoundException("Extension reference not found or expired");
+        }
+        return Long.parseLong(propertyId);
+    }
+
+    public Long getUserIdFromReference(String reference) {
+        if (reference.startsWith("EXT_")) {
+            Long propertyId = getPropertyIdFromExtensionReference(reference);
+            Property property = propertyRepository.findById(propertyId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
+            return property.getUser().getId();
+        } else {
+            PropertyRequest propertyRequest = getTempProperty(reference);
+            return propertyRequest.getUserId();
+        }
+    }
+
+    @Transactional
+    public void extendProperty(Long propertyId) {
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Property not found with id: " + propertyId));
+
+        Calendar cal = Calendar.getInstance();
+
+        if (property.getExpirationDate().before(new Timestamp(cal.getTimeInMillis()))) {
+            cal.add(Calendar.DAY_OF_MONTH, 30);
+        } else {
+            cal.setTimeInMillis(property.getExpirationDate().getTime());
+            cal.add(Calendar.DAY_OF_MONTH, 30);
+        }
+
+        property.setExpirationDate(new Timestamp(cal.getTimeInMillis()));
+        property.setPaid(true);
+        property.setApproved(true);
+        property.setAvailable(true);
+        property.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
+
+        propertyRepository.save(property);
+    }
 }

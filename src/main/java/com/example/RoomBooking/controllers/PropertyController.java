@@ -2,6 +2,7 @@ package com.example.RoomBooking.controllers;
 
 import com.example.RoomBooking.dto.*;
 import com.example.RoomBooking.exceptions.ResourceNotFoundException;
+import com.example.RoomBooking.models.Property;
 import com.example.RoomBooking.repositories.PropertyRepository;
 import com.example.RoomBooking.services.DetailService;
 import com.example.RoomBooking.services.PropertyService;
@@ -104,6 +105,25 @@ public class PropertyController {
         }
     }
 
+    @PostMapping("/{propertyId}/extend")
+    public ResponseEntity<?> extendProperty(@PathVariable Long propertyId, HttpServletRequest request) {
+        try {
+            Property property = propertyRepository.findById(propertyId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Property not found with id: " + propertyId));
+
+            String reference = propertyService.createExtensionReference(propertyId);
+            String paymentUrl = vnPayService.createExtensionPaymentUrl(property, reference, request);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("paymentUrl", paymentUrl);
+            response.put("reference", reference);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error processing property extension: " + e.getMessage());
+        }
+    }
+
     @GetMapping("/payment-callback")
     public ResponseEntity<?> paymentCallback(@RequestParam Map<String, String> queryParams) {
         try {
@@ -113,29 +133,43 @@ public class PropertyController {
             String reference = queryParams.get("vnp_TxnRef");
 
             if (!"00".equals(vnp_ResponseCode) || !"00".equals(vnp_TransactionStatus)) {
-                propertyService.deleteTempProperty(reference);
+                if (reference.startsWith("EXT_")) {
+                    propertyService.deleteExtensionReference(reference);
+                } else {
+                    propertyService.deleteTempProperty(reference);
+                }
                 return ResponseEntity.status(HttpStatus.FOUND)
                         .location(URI.create("https://propertyweb.onrender.com/payment-result?status=error"))
                         .build();
             }
+
             try {
-                PropertyRequest propertyRequest = propertyService.getTempProperty(reference);
+                if (reference.startsWith("EXT_")) {
+                    Long propertyId = propertyService.getPropertyIdFromExtensionReference(reference);
+                    propertyService.extendProperty(propertyId);
+                    propertyService.deleteExtensionReference(reference);
+                } else {
+                    PropertyRequest propertyRequest = propertyService.getTempProperty(reference);
 
-                Calendar cal = Calendar.getInstance();
-                cal.add(Calendar.DAY_OF_MONTH, 37);
-                propertyRequest.setExpirationDate(new Timestamp(cal.getTimeInMillis()));
+                    Calendar cal = Calendar.getInstance();
+                    cal.add(Calendar.DAY_OF_MONTH, 37);
+                    propertyRequest.setExpirationDate(new Timestamp(cal.getTimeInMillis()));
 
-                propertyRequest.setApproved(true);
-                propertyRequest.setPaid(true);
-                propertyRequest.setAvailable(true);
+                    propertyRequest.setApproved(true);
+                    propertyRequest.setPaid(true);
+                    propertyRequest.setAvailable(true);
 
-                propertyService.addProperty(propertyRequest);
+                    propertyService.addProperty(propertyRequest);
+                    propertyService.deleteTempProperty(reference);
+                }
 
                 BigDecimal amount = new BigDecimal(queryParams.get("vnp_Amount"))
                         .divide(new BigDecimal(100));
 
-                detailService.createDetail(propertyRequest.getUserId(), vnp_OrderInfo, amount);
-                propertyService.deleteTempProperty(reference);
+                detailService.createDetail(propertyService.getUserIdFromReference(reference),
+                        vnp_OrderInfo,
+                        amount);
+
                 return ResponseEntity.status(HttpStatus.FOUND)
                         .location(URI.create("https://propertyweb.onrender.com/payment-result?status=success"))
                         .build();

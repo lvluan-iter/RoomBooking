@@ -2,6 +2,7 @@ package com.example.RoomBooking.services;
 
 import com.example.RoomBooking.config.VNPayConfig;
 import com.example.RoomBooking.dto.PropertyRequest;
+import com.example.RoomBooking.models.Property;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -68,6 +69,58 @@ public class VNPayService {
         String queryUrl = query.toString();
         String vnp_SecureHash = hmacSHA512(vnPayConfig.getHashSecret(), hashData.toString());
 
+        queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
+
+        return vnPayConfig.getPaymentUrl() + "?" + queryUrl;
+    }
+
+    public String createExtensionPaymentUrl(Property property, String reference, HttpServletRequest request) {
+        Map<String, String> vnp_Params = new HashMap<>();
+        vnp_Params.put("vnp_Version", "2.1.0");
+        vnp_Params.put("vnp_Command", "pay");
+        vnp_Params.put("vnp_TmnCode", vnPayConfig.getTmnCode());
+        vnp_Params.put("vnp_Amount", String.valueOf(FIXED_AMOUNT * 100));
+        vnp_Params.put("vnp_CreateDate", generateCreateDate());
+        vnp_Params.put("vnp_CurrCode", "VND");
+        vnp_Params.put("vnp_IpAddr", getClientIpAddress(request));
+        vnp_Params.put("vnp_Locale", "vn");
+        vnp_Params.put("vnp_OrderInfo", "Gia han tin BDS: " + property.getTitle());
+        vnp_Params.put("vnp_OrderType", "other");
+        vnp_Params.put("vnp_ReturnUrl", vnPayConfig.getReturnUrl());
+        vnp_Params.put("vnp_TxnRef", reference);
+
+        return createPaymentUrl(vnp_Params);
+    }
+
+    private String createPaymentUrl(Map<String, String> vnp_Params) {
+        List<String> fieldNames = new ArrayList<>(vnp_Params.keySet());
+        Collections.sort(fieldNames);
+
+        StringBuilder hashData = new StringBuilder();
+        StringBuilder query = new StringBuilder();
+
+        Iterator<String> itr = fieldNames.iterator();
+        while (itr.hasNext()) {
+            String fieldName = itr.next();
+            String fieldValue = vnp_Params.get(fieldName);
+            if ((fieldValue != null) && !fieldValue.isEmpty()) {
+                hashData.append(fieldName);
+                hashData.append('=');
+                hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8));
+
+                query.append(URLEncoder.encode(fieldName, StandardCharsets.UTF_8));
+                query.append('=');
+                query.append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8));
+
+                if (itr.hasNext()) {
+                    query.append('&');
+                    hashData.append('&');
+                }
+            }
+        }
+
+        String queryUrl = query.toString();
+        String vnp_SecureHash = hmacSHA512(vnPayConfig.getHashSecret(), hashData.toString());
         queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
 
         return vnPayConfig.getPaymentUrl() + "?" + queryUrl;
