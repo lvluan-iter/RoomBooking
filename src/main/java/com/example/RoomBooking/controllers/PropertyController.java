@@ -171,7 +171,6 @@ public class PropertyController {
             String reference = UUID.randomUUID().toString();
             String paymentUrl = vnPayService.createExtensionPaymentUrl(propertyId, reference, request);
 
-            // Store propertyId in Redis for verification during callback
             String redisKey = "extension:" + reference;
             redisTemplate.opsForValue().set(redisKey, propertyId.toString(), 30, TimeUnit.MINUTES);
 
@@ -211,7 +210,6 @@ public class PropertyController {
             Long propertyId = Long.parseLong(propertyIdStr);
             propertyService.processExtension(propertyId);
 
-            // Create payment detail record
             BigDecimal amount = new BigDecimal(queryParams.get("vnp_Amount"))
                     .divide(new BigDecimal(100));
             Property property = propertyRepository.findById(propertyId)
