@@ -18,6 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.time.YearMonth;
 import java.util.*;
@@ -174,13 +176,15 @@ public class PropertyController {
                         .location(URI.create("https://propertyweb.onrender.com/payment-result?status=success"))
                         .build();
             } catch (Exception e) {
+                String errorMessage = "Lỗi hệ thống: " + e.getMessage();
                 return ResponseEntity.status(HttpStatus.FOUND)
-                        .location(URI.create("https://propertyweb.onrender.com/payment-result?status=system-error"))
+                        .location(URI.create("https://propertyweb.onrender.com/payment-result?status=system-error&message=" +
+                                URLEncoder.encode(errorMessage, StandardCharsets.UTF_8)))
                         .build();
             }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(URI.create("https://propertyweb.onrender.com/payment-result?status=system-error"))
+                    .location(URI.create("https://propertyweb.onrender.com/payment-result?status=system-error&message="))
                     .build();
         }
     }
