@@ -23,6 +23,7 @@ public class VNPayService {
     private final VNPayConfig vnPayConfig;
     private static final long FIXED_AMOUNT = 100000;
 
+    @Autowired
     private PropertyRepository propertyRepository;
 
     public VNPayService(VNPayConfig vnPayConfig) {
