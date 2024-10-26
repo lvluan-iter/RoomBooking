@@ -1,6 +1,7 @@
 package com.example.RoomBooking.controllers;
 
 import com.example.RoomBooking.dto.*;
+import com.example.RoomBooking.exceptions.ResourceNotFoundException;
 import com.example.RoomBooking.repositories.PropertyRepository;
 import com.example.RoomBooking.services.DetailService;
 import com.example.RoomBooking.services.PropertyService;
@@ -181,6 +182,21 @@ public class PropertyController {
     public ResponseEntity<List<PropertyResponse>> getPropertyForUser(@PathVariable Long userId) {
         List<PropertyResponse> responses = propertyService.getPropertyForUser(userId);
         return ResponseEntity.ok(responses);
+    }
+
+    @PatchMapping("/{propertyId}/toggle-visibility")
+    public ResponseEntity<?> togglePropertyVisibility(@PathVariable Long propertyId) {
+        try {
+            propertyService.togglePropertyVisibility(propertyId);
+            return ResponseEntity.ok()
+                    .body(Map.of("message", "Property visibility toggled successfully"));
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error toggling property visibility: " + e.getMessage()));
+        }
     }
 }
 

@@ -481,4 +481,15 @@ public class PropertyService {
     private String generateUniqueReference() {
         return UUID.randomUUID().toString();
     }
+
+    @Transactional
+    public void togglePropertyVisibility(Long propertyId) {
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Property not found with id: " + propertyId));
+
+        property.setAvailable(!property.isAvailable());
+        property.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
+
+        propertyRepository.save(property);
+    }
 }
