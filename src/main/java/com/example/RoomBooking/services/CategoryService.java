@@ -41,6 +41,21 @@ public class CategoryService {
         categoryRepository.delete(category);
     }
 
+    public void updateCategory(Long categoryId, CategoryRequest request) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + categoryId));
+
+        boolean exists = categoryRepository.existsByCategoryNameIgnoreCase(request.getCategoryName());
+        if (exists && !category.getCategoryName().equalsIgnoreCase(request.getCategoryName())) {
+            throw new RuntimeException("Loại phòng này đã tồn tại !");
+        }
+
+        category.setCategoryName(request.getCategoryName());
+        category.setImageUrl(request.getImageUrl());
+        categoryRepository.save(category);
+    }
+
+
     private CategoryResponse mapToResponse(Category category) {
         CategoryResponse response = new CategoryResponse();
         response.setId(category.getId());

@@ -2,6 +2,7 @@ package com.example.RoomBooking.controllers;
 
 import com.example.RoomBooking.dto.CategoryRequest;
 import com.example.RoomBooking.dto.CategoryResponse;
+import com.example.RoomBooking.exceptions.ResourceNotFoundException;
 import com.example.RoomBooking.services.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -38,4 +39,17 @@ public class CategoryController {
         categoryService.deleteCategory(categoryId);
         return ResponseEntity.ok("Category deleted successfully.");
     }
+
+    @PutMapping("/{categoryId}")
+    public ResponseEntity<String> updateCategory(@PathVariable Long categoryId, @RequestBody CategoryRequest categoryRequest) {
+        try {
+            categoryService.updateCategory(categoryId, categoryRequest);
+            return ResponseEntity.ok("Category updated successfully.");
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
 }
