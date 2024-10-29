@@ -358,6 +358,9 @@ public class PropertyService {
         response.setExpirationDate(property.getExpirationDate());
         response.setApproved(property.isApproved());
         response.setPaid(property.isPaid());
+        response.setReason(property.getReason());
+        response.setLocked(property.isLocked());
+
 
         return response;
     }

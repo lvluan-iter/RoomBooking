@@ -33,6 +33,8 @@ public class PropertyResponse {
     private Timestamp expirationDate;
     private boolean isApproved;
     private boolean isPaid;
+    private boolean isLocked;
+    private String reason;
 
     // Getters and Setters
     public Long getId() {
@@ -233,5 +235,21 @@ public class PropertyResponse {
 
     public void setPaid(boolean paid) {
         isPaid = paid;
+    }
+
+    public boolean isLocked() {
+        return isLocked;
+    }
+
+    public void setLocked(boolean locked) {
+        isLocked = locked;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
     }
 }
