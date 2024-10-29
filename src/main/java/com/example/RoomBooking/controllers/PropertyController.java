@@ -16,6 +16,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.net.URI;
@@ -49,6 +50,12 @@ public class PropertyController {
         this.detailService = detailService;
         this.propertyRepository = propertyRepository;
         this.redisTemplate = redisTemplate;
+    }
+
+    @GetMapping
+    public ResponseEntity<List<PropertyResponse>> getAllLocations() {
+        List<PropertyResponse> response = propertyService.getAllProperties();
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/available")

@@ -60,6 +60,13 @@ public class PropertyService {
         return propertyRepository.findByIsAvailableTrue(pageable).map(this::mapToResponse);
     }
 
+    public List<PropertyResponse> getAllProperties() {
+        return propertyRepository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     public List<PropertyResponse> getTop10PopularProperties() {
         return propertyRepository.findTop10PopularProperties().stream()
                 .map(this::mapToResponse)
