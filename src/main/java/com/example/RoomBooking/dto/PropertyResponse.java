@@ -22,7 +22,7 @@ public class PropertyResponse {
     private List<AmenityDTO> amenities;
     private Long categoryId;
     private String categoryName;
-    private Long userId;
+    private UserDTO user;
     private Timestamp createdAt;
     private Timestamp updatedAt;
     private Double visits;
@@ -149,12 +149,12 @@ public class PropertyResponse {
         this.categoryName = categoryName;
     }
 
-    public Long getUserId() {
-        return userId;
+    public UserDTO getUser() {
+        return user;
     }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
+    public void setUser(UserDTO user) {
+        this.user = user;
     }
 
     public Timestamp getCreatedAt() {

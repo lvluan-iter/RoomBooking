@@ -234,9 +234,9 @@ public class UserService {
             String gender = user.getGender();
             String formattedName;
 
-            if ("Male".equalsIgnoreCase(gender)) {
+            if ("Nam".equalsIgnoreCase(gender)) {
                 formattedName = "Mr. " + firstName;
-            } else if ("Female".equalsIgnoreCase(gender)) {
+            } else if ("Nữ".equalsIgnoreCase(gender)) {
                 formattedName = "Mrs. " + firstName;
             } else {
                 formattedName = firstName;

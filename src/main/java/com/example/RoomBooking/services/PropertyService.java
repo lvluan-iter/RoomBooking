@@ -340,7 +340,7 @@ public class PropertyService {
         response.setKeywords(property.getKeywords());
         response.setCategoryId(property.getCategory().getId());
         response.setCategoryName(property.getCategory().getCategoryName());
-        response.setUserId(property.getUser().getId());
+        response.setUser(mapToUserDTO(property.getUser()));
         response.setCreatedAt(property.getCreatedAt());
         response.setUpdatedAt(property.getUpdatedAt());
         response.setVisits(property.getVisits());
@@ -350,7 +350,6 @@ public class PropertyService {
                 .map(this::mapToAmenityDTO)
                 .collect(Collectors.toList()));
 
-        // Map nearby places
         response.setNearbyPlaces(property.getNearbyPlaces().stream()
                 .map(this::mapToNearbyPlaceDTO)
                 .collect(Collectors.toList()));
@@ -363,6 +362,50 @@ public class PropertyService {
 
 
         return response;
+    }
+
+    private UserDTO mapToUserDTO(User user) {
+        UserDTO userDTO = new UserDTO();
+        if (user.isPublicEmail()) {
+            userDTO.setEmail(user.getEmail());
+        } else {
+            String email = user.getEmail();
+            String maskedEmail = email.replaceAll("(?<=.).(?=[^@]*?.@)", "*");
+            userDTO.setEmail(maskedEmail);
+        }
+        if (user.isPublicPhone()) {
+            userDTO.setPhoneNumber(user.getPhoneNumber());
+        } else {
+            String phoneNumber = user.getPhoneNumber();
+            String maskedPhoneNumber = phoneNumber.replaceAll(".(?=.{4})", "*");
+            userDTO.setPhoneNumber(maskedPhoneNumber);
+        }
+        if (user.isPublicProfile()) {
+            userDTO.setFullname(user.getFullname());
+        } else {
+            String fullname = user.getFullname();
+            String firstName = getFirstName(fullname);
+            String formattedName;
+
+            if ("Nam".equalsIgnoreCase(user.getGender())) {
+                formattedName = "Mr. " + firstName;
+            } else if ("Nữ".equalsIgnoreCase(user.getGender())) {
+                formattedName = "Mrs. " + firstName;
+            } else {
+                formattedName = firstName;
+            }
+            userDTO.setFullname(formattedName);
+        }
+        userDTO.setAvatar(user.getAvatar());
+        return userDTO;
+    }
+
+    private String getFirstName(String fullname) {
+        if (fullname != null && !fullname.isEmpty()) {
+            String[] parts = fullname.split(" ");
+            return parts[parts.length - 1];
+        }
+        return fullname;
     }
 
     private AmenityDTO mapToAmenityDTO(Amenity amenity) {
