@@ -37,7 +37,7 @@ public class LocationController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('Owner', 'Admin')")
+    @PreAuthorize("hasAnyRole('ROLE_Owner', 'ROLE_Admin')")
     public ResponseEntity<LocationDTO> updateLocation(
             @PathVariable Long id,
             @RequestBody LocationDTO locationDTO) {
@@ -46,7 +46,7 @@ public class LocationController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('Owner', 'Admin')")
+    @PreAuthorize("hasAnyRole('ROLE_Owner', 'ROLE_Admin')")
     public ResponseEntity<Void> deleteLocation(@PathVariable Long id) {
         locationService.deleteLocation(id);
         return ResponseEntity.noContent().build();
