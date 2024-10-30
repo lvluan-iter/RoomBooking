@@ -53,12 +53,14 @@ public class PropertyController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PropertyResponse>> getAllLocations() {
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<List<PropertyResponse>> getAllProperties() {
         List<PropertyResponse> response = propertyService.getAllProperties();
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/available")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<Page<PropertyResponse>> getAvailableProperties(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "9") int size) {
@@ -66,13 +68,8 @@ public class PropertyController {
         return ResponseEntity.ok(properties);
     }
 
-    @GetMapping("/popular")
-    public ResponseEntity<List<PropertyResponse>> getTop10PopularProperties() {
-        List<PropertyResponse> popular = propertyService.getTop10PopularProperties();
-        return ResponseEntity.ok(popular);
-    }
-
     @PostMapping("/search")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<Page<PropertyResponse>> searchProperties(
             @RequestBody PropertySearchDTO searchDTO,
             @RequestParam(defaultValue = "0") int page,
@@ -83,6 +80,7 @@ public class PropertyController {
     }
 
     @GetMapping("/searchNearby")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<?> searchNearbyProperties(@RequestParam String location,
                                                     @RequestParam Long propertyId,
                                                     @RequestParam(defaultValue = "0") int page,
@@ -98,12 +96,14 @@ public class PropertyController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<PropertyResponse> getPropertyById(@PathVariable Long id) {
         PropertyResponse property = propertyService.getPropertyById(id);
         return ResponseEntity.ok(property);
     }
 
     @PostMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> addProperty(@RequestBody PropertyRequest propertyRequest, HttpServletRequest request) {
         try {
             if (propertyRequest.isPaid()) {
@@ -173,6 +173,7 @@ public class PropertyController {
     }
 
     @PostMapping("/{propertyId}/extend")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> extendProperty(@PathVariable Long propertyId, HttpServletRequest request) {
         try {
             String reference = UUID.randomUUID().toString();
@@ -236,18 +237,21 @@ public class PropertyController {
     }
 
     @PutMapping("/{propertyId}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> updateProperty(@PathVariable Long propertyId, @RequestBody PropertyRequest propertyRequest) {
         propertyService.updateProperty(propertyId, propertyRequest);
         return ResponseEntity.ok(Map.of("message", "Chỉnh sửa thông tin thành công!"));
     }
 
     @DeleteMapping("/{propertyId}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> deleteProperty(@PathVariable Long propertyId) {
         propertyService.deleteProperty(propertyId);
         return ResponseEntity.ok(Map.of("message", "Xóa bất động sản thành công!"));
     }
 
     @GetMapping("/quick-stats/{userId}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Object>> getUserQuickStats(@PathVariable Long userId) {
         Map<String, Object> quickStats = propertyService.getQuickStatsForUser(userId);
         return ResponseEntity.ok(quickStats);
@@ -263,12 +267,14 @@ public class PropertyController {
     }
 
     @GetMapping("user/{userId}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<PropertyResponse>> getPropertyForUser(@PathVariable Long userId) {
         List<PropertyResponse> responses = propertyService.getPropertyForUser(userId);
         return ResponseEntity.ok(responses);
     }
 
     @PatchMapping("/{propertyId}/toggle-visibility")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> togglePropertyVisibility(@PathVariable Long propertyId) {
         try {
             propertyService.togglePropertyVisibility(propertyId);
@@ -281,5 +287,37 @@ public class PropertyController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Error toggling property visibility: " + e.getMessage()));
         }
+    }
+
+    @PatchMapping("/{id}/approve")
+    @PreAuthorize("hasAnyRole('Owner', 'Admin')")
+    public ResponseEntity<Void> approveListing(@PathVariable("id") Long propertyId) {
+        propertyService.approveListing(propertyId);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{id}/reject")
+    @PreAuthorize("hasAnyRole('Owner', 'Admin')")
+    public ResponseEntity<Void> rejectListing(
+            @PathVariable("id") Long propertyId) {
+        propertyService.rejectListing(propertyId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("/{id}/lock")
+    @PreAuthorize("hasAnyRole('Owner', 'Admin')")
+    public ResponseEntity<Void> lockListing(
+            @PathVariable("id") Long propertyId,
+            @RequestBody Map<String, Object> payload) {
+        String reason = (String) payload.get("reason");
+        propertyService.lockListing(propertyId, reason);
+        return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("/{id}/unlock")
+    @PreAuthorize("hasAnyRole('Owner', 'Admin')")
+    public ResponseEntity<Void> unlockListing(@PathVariable("id") Long propertyId) {
+        propertyService.unlockListing(propertyId);
+        return ResponseEntity.ok().build();
     }
 }

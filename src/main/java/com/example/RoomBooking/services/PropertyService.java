@@ -8,6 +8,7 @@ import com.example.RoomBooking.specifications.PropertySpecifications;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.lettuce.core.RedisCommandExecutionException;
 import jakarta.transaction.Transactional;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -558,6 +559,56 @@ public class PropertyService {
         property.setApproved(true);
         property.setPaid(true);
         property.setAvailable(true);
+        property.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
+
+        propertyRepository.save(property);
+    }
+
+    @Transactional
+    public void approveListing(Long propertyId) {
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Property not found with id: " + propertyId));
+
+        property.setApproved(true);
+        property.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DATE, 7);
+        property.setExpirationDate(new Timestamp(calendar.getTimeInMillis()));
+
+        propertyRepository.save(property);
+    }
+
+    @Transactional
+    public void rejectListing(Long propertyId) {
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Property not found with id: " + propertyId));
+        propertyRepository.delete(property);
+    }
+
+    @Transactional
+    public void lockListing(Long propertyId, String reason) {
+        if (reason == null || reason.trim().isEmpty()) {
+            throw new RuntimeException("Lock reason cannot be empty");
+        }
+
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Property not found with id: " + propertyId));
+
+        property.setLocked(true);
+        property.setReason(reason);
+        property.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
+
+        propertyRepository.save(property);
+    }
+
+    @Transactional
+    public void unlockListing(Long propertyId) {
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Property not found with id: " + propertyId));
+
+        property.setLocked(false);
+        property.setReason(null);
         property.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
 
         propertyRepository.save(property);
