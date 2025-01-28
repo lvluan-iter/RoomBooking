@@ -367,6 +367,7 @@ public class PropertyService {
 
     private UserDTO mapToUserDTO(User user) {
         UserDTO userDTO = new UserDTO();
+        userDTO.setId(user.getId());
         if (user.isPublicEmail()) {
             userDTO.setEmail(user.getEmail());
         } else {

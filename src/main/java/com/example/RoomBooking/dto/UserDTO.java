@@ -1,10 +1,19 @@
 package com.example.RoomBooking.dto;
 
 public class UserDTO {
+    private Long id;
     private String email;
     private String fullname;
     private String phoneNumber;
     private String avatar;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getEmail() {
         return email;
