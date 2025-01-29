@@ -39,4 +39,10 @@ public interface PropertyRepository extends JpaRepository<Property, Long>, JpaSp
 
     @Query("SELECT p FROM Property p WHERE p.user.id = :userId")
     List<Property> findPropertyByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT COUNT(p) FROM Property p WHERE p.createdAt >= :startDate AND p.createdAt < :endDate")
+    Long countPropertyCreatedAtBetween(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT p.id FROM Property p")
+    List<Long> findAllPropertyIds();
 }

@@ -17,6 +17,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -44,6 +45,9 @@ public class PropertyService {
 
     @Autowired
     private LocationRepository locationRepository;
+
+    @Autowired
+    private DetailRepository detailRepository;
 
     @Autowired
     private NearbyPlaceRepository nearbyPlaceRepository;
@@ -192,6 +196,39 @@ public class PropertyService {
         return stats;
     }
 
+    public Map<String, Object> getQuickStatsForAdmin() {
+        Map<String, Object> stats = new HashMap<>();
+        LocalDateTime now = LocalDateTime.now();
+        YearMonth currentMonth = YearMonth.from(now);
+        YearMonth previousMonth = currentMonth.minusMonths(1);
+
+        Long currentMonthListings = propertyRepository.countPropertyCreatedAtBetween(currentMonth.atDay(1).atStartOfDay(), now);
+        Long previousMonthListings = propertyRepository.countPropertyCreatedAtBetween(previousMonth.atDay(1).atStartOfDay(), currentMonth.atDay(1).atStartOfDay());
+
+        stats.put("totalProperties", currentMonthListings);
+        stats.put("propertiesGrowth", calculateGrowth(previousMonthListings, currentMonthListings));
+
+        Long currentUserCreated = userRepository.countUserCreatedAtBetween(currentMonth.atDay(1).atStartOfDay(), now);
+        Long previousUserCreated = userRepository.countUserCreatedAtBetween(previousMonth.atDay(1).atStartOfDay(), currentMonth.atDay(1).atStartOfDay());
+
+        stats.put("totalUsers", currentUserCreated);
+        stats.put("usersGrowth", calculateGrowth(previousUserCreated, currentUserCreated));
+
+        List<Long> allPropertyIds = propertyRepository.findAllPropertyIds();
+        Long currentMonthViews = sumViewsForMonth(allPropertyIds, currentMonth);
+        Long previousMonthViews = sumViewsForMonth(allPropertyIds, previousMonth);
+
+        stats.put("totalViews", currentMonthViews);
+        stats.put("viewsGrowth", calculateGrowth(previousMonthViews, currentMonthViews));
+
+        BigDecimal currentRevenueCreated = detailRepository.calculateRevenueMonth(currentMonth.atDay(1).atStartOfDay(), now);
+        BigDecimal previousRevenueCreated = detailRepository.calculateRevenueMonth(previousMonth.atDay(1).atStartOfDay(), currentMonth.atDay(1).atStartOfDay());
+
+        stats.put("totalRevenues", currentRevenueCreated);
+        stats.put("revenueGrowth", calculateGrowth(previousRevenueCreated.longValue(), currentRevenueCreated.longValue()));
+        return stats;
+    }
+
     public void incrementPropertyView(Long propertyId) {
         String key = String.format("property:%d:views:%s", propertyId, YearMonth.now());
 
@@ -215,6 +252,20 @@ public class PropertyService {
         }
 
         return userPropertyIds.stream()
+                .mapToLong(id -> {
+                    String key = String.format("property:%d:views:%s", id, yearMonth);
+                    String value = redisTemplate.opsForValue().get(key);
+                    return value != null ? Long.parseLong(value) : 0L;
+                })
+                .sum();
+    }
+
+    private Long sumViewsForMonth(List<Long> propertyIds, YearMonth yearMonth) {
+        if (propertyIds.isEmpty()) {
+            return 0L;
+        }
+
+        return propertyIds.stream()
                 .mapToLong(id -> {
                     String key = String.format("property:%d:views:%s", id, yearMonth);
                     String value = redisTemplate.opsForValue().get(key);

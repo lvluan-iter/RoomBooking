@@ -257,6 +257,13 @@ public class PropertyController {
         return ResponseEntity.ok(quickStats);
     }
 
+    @GetMapping("/admin/quick-stats")
+    @PreAuthorize("hasAnyRole('Owner', 'Admin')")
+    public ResponseEntity<Map<String, Object>> getAdminQuickStats() {
+        Map<String, Object> quickStats = propertyService.getQuickStatsForAdmin();
+        return ResponseEntity.ok(quickStats);
+    }
+
     @GetMapping("/stats/{userId}")
     public ResponseEntity<List<PropertyStats>> getPropertyStats(
             @PathVariable Long userId,
