@@ -154,10 +154,8 @@ public class TourRequestService {
         for (TourRequest tour : tomorrowTours) {
             TourRequestDTO tourDTO = mapToDTO(tour);
 
-            // Gửi email nhắc nhở cho khách hàng
             emailService.sendReminderEmail(tourDTO, tourDTO.getEmail());
 
-            // Lấy email của chủ sở hữu bất động sản và gửi email nhắc nhở
             userRepository.findById(tour.getProperty().getUser().getId())
                     .ifPresent(propertyOwner -> {
                 emailService.sendReminderEmail(tourDTO, propertyOwner.getEmail());

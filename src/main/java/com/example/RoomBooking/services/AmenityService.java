@@ -1,21 +1,21 @@
 package com.example.RoomBooking.services;
 
 import com.example.RoomBooking.dto.AmenityDTO;
+import com.example.RoomBooking.exceptions.ResourceNotFoundException;
 import com.example.RoomBooking.models.Amenity;
 import com.example.RoomBooking.repositories.AmenityRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class AmenityService {
+    private final AmenityRepository amenityRepository;
 
-    @Autowired
-    private AmenityRepository amenityRepository;
+    public AmenityService(AmenityRepository amenityRepository) {
+        this.amenityRepository = amenityRepository;
+    }
 
     public List<AmenityDTO> getAllAmenities() {
         List<Amenity> amenities = amenityRepository.findAll();
@@ -25,10 +25,9 @@ public class AmenityService {
     }
 
     public AmenityDTO getAmenityById(Long id) {
-        Amenity amenity = amenityRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Amenity not found with id: " + id));
-        return mapToResponse(amenity);
+        return amenityRepository.findById(id)
+                .map(this::mapToResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("Amenity not found with id:" + id));
     }
 
     public AmenityDTO createAmenity(AmenityDTO amenityDTO) {
@@ -40,8 +39,7 @@ public class AmenityService {
 
     public AmenityDTO updateAmenity(AmenityDTO amenityDTO) {
         Amenity existingAmenity = amenityRepository.findById(amenityDTO.getId())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Amenity not found with id: " + amenityDTO.getId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Amenity not found with id:" + amenityDTO.getId()));
 
         updateAmenityFromDTO(existingAmenity, amenityDTO);
         Amenity updatedAmenity = amenityRepository.save(existingAmenity);
@@ -50,8 +48,7 @@ public class AmenityService {
 
     public void deleteAmenity(Long id) {
         if (!amenityRepository.existsById(id)) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND, "Amenity not found with id: " + id);
+            throw new ResourceNotFoundException("Amenity not found with id:" + id);
         }
         amenityRepository.deleteById(id);
     }

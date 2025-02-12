@@ -31,14 +31,12 @@ public class MessageController {
         Message savedMessage = messageService.save(message);
         MessageDTO savedMessageDTO = convertToDTO(savedMessage);
 
-        // Gửi tin nhắn đến người nhận
         messagingTemplate.convertAndSendToUser(
                 String.valueOf(savedMessageDTO.getRecipientId()),
                 "/topic/messages",
                 savedMessageDTO
         );
 
-        // Gửi thông báo số tin nhắn chưa đọc
         int unreadCount = messageService.getUnreadMessageCount(message.getRecipient().getId());
         messagingTemplate.convertAndSendToUser(
                 String.valueOf(message.getRecipient().getId()),
@@ -46,7 +44,6 @@ public class MessageController {
                 new UnreadMessageNotification(message.getSender().getId(), unreadCount)
         );
 
-        // Cập nhật cuộc trò chuyện cho cả người gửi và người nhận
         updateConversations(message.getSender().getId(), message.getRecipient().getId());
     }
 
@@ -55,7 +52,6 @@ public class MessageController {
         Message updatedMessage = messageService.updateMessageStatus(statusUpdateDTO.getMessageId(), statusUpdateDTO.getStatus());
         MessageDTO updatedMessageDTO = convertToDTO(updatedMessage);
 
-        // Gửi cập nhật trạng thái cho cả người gửi và người nhận
         messagingTemplate.convertAndSendToUser(
                 String.valueOf(updatedMessageDTO.getSenderId()),
                 "/topic/message-status",
@@ -88,7 +84,6 @@ public class MessageController {
                 updatedMessageDTOs
         );
 
-        // Gửi thông báo số tin nhắn chưa đọc
         int unreadCount = messageService.getUnreadMessageCount(statusUpdateDTO.getRecipientId());
         messagingTemplate.convertAndSendToUser(
                 String.valueOf(statusUpdateDTO.getRecipientId()),
@@ -96,7 +91,6 @@ public class MessageController {
                 new UnreadMessageNotification(statusUpdateDTO.getRecipientId(), unreadCount)
         );
 
-        // Update conversations for recipient
         updateConversations(statusUpdateDTO.getRecipientId(), statusUpdateDTO.getRecipientId());
     }
 

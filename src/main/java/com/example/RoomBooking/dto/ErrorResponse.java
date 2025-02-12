@@ -1,19 +1,14 @@
 package com.example.RoomBooking.dto;
 
+import lombok.*;
+
+@Setter
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ErrorResponse {
     private String message;
 
-    public ErrorResponse(String message) {
-        this.message = message;
-    }
-
-    // Getter và setter
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
 }
 

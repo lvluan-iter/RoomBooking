@@ -1,11 +1,10 @@
 package com.example.RoomBooking.services;
 
 import com.example.RoomBooking.dto.LocationDTO;
+import com.example.RoomBooking.exceptions.ResourceNotFoundException;
 import com.example.RoomBooking.models.Location;
 import com.example.RoomBooking.repositories.LocationRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import jakarta.persistence.EntityNotFoundException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -13,14 +12,18 @@ import java.util.stream.Collectors;
 @Service
 public class LocationService {
 
-    @Autowired
-    private LocationRepository locationRepository;
+    private final LocationRepository locationRepository;
+
+    public LocationService(LocationRepository locationRepository) {
+        this.locationRepository = locationRepository;
+    }
 
     public LocationDTO createLocation(LocationDTO locationDTO) {
-        Location location = new Location();
-        location.setName(locationDTO.getName());
-        location.setUrl(locationDTO.getUrl());
-        location.setDescription(locationDTO.getDescription());
+        Location location = Location.builder()
+                .name(locationDTO.getName())
+                .url(locationDTO.getUrl())
+                .description(locationDTO.getDescription())
+                .build();
 
         Location savedLocation = locationRepository.save(location);
         return MapToDTO(savedLocation);
@@ -35,17 +38,21 @@ public class LocationService {
 
     public LocationDTO getLocationById(Long id) {
         Location location = locationRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Location not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Location not found with id: " + id));
         return MapToDTO(location);
     }
 
     public LocationDTO updateLocation(Long id, LocationDTO locationDTO) {
         Location location = locationRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Location not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Location not found with id: " + id));
 
-        location.setName(locationDTO.getName());
-        location.setUrl(locationDTO.getUrl());
-        location.setDescription(locationDTO.getDescription());
+        location = Location.builder()
+                .id(location.getId())
+                .name(locationDTO.getName())
+                .url(locationDTO.getUrl())
+                .description(locationDTO.getDescription())
+                .properties(location.getProperties())
+                .build();
 
         Location updatedLocation = locationRepository.save(location);
         return MapToDTO(updatedLocation);
@@ -53,7 +60,7 @@ public class LocationService {
 
     public void deleteLocation(Long id) {
         if (!locationRepository.existsById(id)) {
-            throw new EntityNotFoundException("Location not found with id: " + id);
+            throw new ResourceNotFoundException("Location not found with id: " + id);
         }
         locationRepository.deleteById(id);
     }

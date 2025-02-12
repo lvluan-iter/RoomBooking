@@ -65,38 +65,20 @@ public class UserController {
 
     @PutMapping("/{userId}/password")
     public ResponseEntity<?> changePassword(@PathVariable Long userId, @RequestBody ChangePasswordRequest changePasswordRequest) {
-        try {
-            userService.changePassword(userId, changePasswordRequest);
-            return ResponseEntity.ok("Password changed successfully.");
-        } catch (ResourceNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while changing the password.");
-        }
+        userService.changePassword(userId, changePasswordRequest);
+        return ResponseEntity.ok("Password changed successfully.");
     }
 
     @PostMapping("/{userId}/favorites/{propertyId}")
     public ResponseEntity<String> addPropertyToFavorites(@PathVariable Long userId, @PathVariable Long propertyId) {
-        try {
-            userService.addPropertyToFavorites(userId, propertyId);
-            return ResponseEntity.ok("Property added to favorites successfully");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
-        } catch (ResourceNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+        userService.addPropertyToFavorites(userId, propertyId);
+        return ResponseEntity.ok("Property added to favorites successfully");
     }
 
     @MessageMapping("/user-status")
     public void handleUserStatus(UserStatusDTO userStatusDTO) {
-        try {
-            userService.updateUserStatus(userStatusDTO.getUserId(), userStatusDTO.getStatus());
-            broadcastUserStatus(userStatusDTO.getUserId(), userStatusDTO.getStatus());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        userService.updateUserStatus(userStatusDTO.getUserId(), userStatusDTO.getStatus());
+        broadcastUserStatus(userStatusDTO.getUserId(), userStatusDTO.getStatus());
     }
 
     @GetMapping("/status/{userId}")
@@ -113,8 +95,6 @@ public class UserController {
     @MessageMapping("/user-status/get")
     public void handleGetUserStatus(@Payload Long requestedUserId) {
         UserStatus status = userService.getUserStatus(requestedUserId);
-
-        // Gửi trạng thái về một topic chung
         messagingTemplate.convertAndSend("/topic/user-status", new UserStatusUpdate(requestedUserId, status));
     }
 

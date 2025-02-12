@@ -85,14 +85,9 @@ public class PropertyController {
                                                     @RequestParam Long propertyId,
                                                     @RequestParam(defaultValue = "0") int page,
                                                     @RequestParam(defaultValue = "5") int size) {
-        try {
-            Pageable pageable = PageRequest.of(page, size);
-            Page<PropertyResponse> properties = propertyService.searchNearBy(location, propertyId, pageable);
-            return ResponseEntity.ok(properties);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ErrorResponse("Error: " + e.getMessage()));
-        }
+        Pageable pageable = PageRequest.of(page, size);
+        Page<PropertyResponse> properties = propertyService.searchNearBy(location, propertyId, pageable);
+        return ResponseEntity.ok(properties);
     }
 
     @GetMapping("/{id}")
@@ -105,23 +100,17 @@ public class PropertyController {
     @PostMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> addProperty(@RequestBody PropertyRequest propertyRequest, HttpServletRequest request) {
-        try {
-            if (propertyRequest.isPaid()) {
-                String reference = propertyService.createTempPropertyAndGetRef(propertyRequest);
+        if (propertyRequest.isPaid()) {
+            String reference = propertyService.createTempPropertyAndGetRef(propertyRequest);
+            String paymentUrl = vnPayService.createPaymentUrl(propertyRequest, reference, request);
 
-                String paymentUrl = vnPayService.createPaymentUrl(propertyRequest, reference, request);
-
-                Map<String, String> response = new HashMap<>();
-                response.put("paymentUrl", paymentUrl);
-                response.put("reference", reference);
-                return ResponseEntity.ok(response);
-            } else {
-                propertyService.addProperty(propertyRequest);
-                return ResponseEntity.ok(Map.of("message", "Đăng tin miễn phí thành công!"));
-            }
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error processing property: " + e.getMessage());
+            return ResponseEntity.ok(Map.of(
+                    "paymentUrl", paymentUrl,
+                    "reference", reference
+            ));
+        } else {
+            propertyService.addProperty(propertyRequest);
+            return ResponseEntity.ok(Map.of("message", "Đăng tin miễn phí thành công!"));
         }
     }
 
@@ -174,22 +163,18 @@ public class PropertyController {
 
     @PostMapping("/{propertyId}/extend")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> extendProperty(@PathVariable Long propertyId, HttpServletRequest request) {
-        try {
-            String reference = UUID.randomUUID().toString();
-            String paymentUrl = vnPayService.createExtensionPaymentUrl(propertyId, reference, request);
+    public ResponseEntity<Map<String, String>> extendProperty(@PathVariable Long propertyId, HttpServletRequest request) {
+        String reference = UUID.randomUUID().toString();
+        String paymentUrl = vnPayService.createExtensionPaymentUrl(propertyId, reference, request);
 
-            String redisKey = "extension:" + reference;
-            redisTemplate.opsForValue().set(redisKey, propertyId.toString(), 30, TimeUnit.MINUTES);
+        String redisKey = "extension:" + reference;
+        redisTemplate.opsForValue().set(redisKey, propertyId.toString(), 30, TimeUnit.MINUTES);
 
-            Map<String, String> response = new HashMap<>();
-            response.put("paymentUrl", paymentUrl);
-            response.put("reference", reference);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error processing extension: " + e.getMessage());
-        }
+        Map<String, String> response = new HashMap<>();
+        response.put("paymentUrl", paymentUrl);
+        response.put("reference", reference);
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/extension-callback")
@@ -283,17 +268,8 @@ public class PropertyController {
     @PatchMapping("/{propertyId}/toggle-visibility")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> togglePropertyVisibility(@PathVariable Long propertyId) {
-        try {
-            propertyService.togglePropertyVisibility(propertyId);
-            return ResponseEntity.ok()
-                    .body(Map.of("message", "Property visibility toggled successfully"));
-        } catch (ResourceNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error toggling property visibility: " + e.getMessage()));
-        }
+        propertyService.togglePropertyVisibility(propertyId);
+        return ResponseEntity.ok(Map.of("message", "Property visibility toggled successfully"));
     }
 
     @PatchMapping("/{id}/approve")

@@ -37,24 +37,20 @@ public class FileUploadController {
     }
 
     @PostMapping("/upload-images")
-    public List<String> uploadImages(@RequestParam("images") MultipartFile[] files) {
+    public List<String> uploadImages(@RequestParam("images") MultipartFile[] files) throws IOException {
         List<String> fileUrls = new ArrayList<>();
-        try {
-            for (MultipartFile file : files) {
-                // Upload file lên Cloudinary
-                Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
-                        ObjectUtils.asMap(
-                                "resource_type", "auto",
-                                "folder", "room-booking"
-                        ));
 
-                String fileUrl = (String) uploadResult.get("secure_url");
-                fileUrls.add(fileUrl);
-            }
-            return fileUrls;
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Lỗi khi upload ảnh: " + e.getMessage());
+        for (MultipartFile file : files) {
+            Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
+                    ObjectUtils.asMap(
+                            "resource_type", "auto",
+                            "folder", "room-booking"
+                    ));
+
+            String fileUrl = (String) uploadResult.get("secure_url");
+            fileUrls.add(fileUrl);
         }
+
+        return fileUrls;
     }
 }

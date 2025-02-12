@@ -1,6 +1,7 @@
 package com.example.RoomBooking.services;
 
 import com.example.RoomBooking.dto.*;
+import com.example.RoomBooking.exceptions.ResourceAlreadyExistsException;
 import com.example.RoomBooking.exceptions.ResourceNotFoundException;
 import com.example.RoomBooking.models.*;
 import com.example.RoomBooking.repositories.PropertyRepository;
@@ -50,10 +51,10 @@ public class UserService {
 
     public void registerUser(RegisterRequest registerRequest) {
         if (userRepository.existsByUsername(registerRequest.getUsername())) {
-            throw new RuntimeException("Tên đăng nhập đã tồn tại!");
+            throw new ResourceAlreadyExistsException("Username already exists!");
         }
         if (userRepository.existsByEmail(registerRequest.getEmail())) {
-            throw new RuntimeException("Email đã tồn tại!");
+            throw new ResourceAlreadyExistsException("Email already exists!");
         }
         User user = new User();
         user.setUsername(registerRequest.getUsername());
@@ -63,15 +64,12 @@ public class UserService {
         user.setGender(registerRequest.getGender());
         user.setBirthdate(registerRequest.getBirthdate());
 
-        // Validate new password
         if (isInvalidPassword(registerRequest.getPassword())) {
             throw new RuntimeException("New password does not meet complexity requirements");
         }
-        // Mã hóa mật khẩu trước khi lưu vào cơ sở dữ liệu
         String encodedPassword = passwordEncoder.encode(registerRequest.getPassword());
         user.setPassword(encodedPassword);
 
-        // Gán quyền mặc định cho người dùng mới
         Role defaultRole = roleRepository.findByRoleName("User")
                 .orElseThrow(() -> new RuntimeException("Default role not found"));
         Set<Role> roles = new HashSet<>();
@@ -119,22 +117,18 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
-        // Validate current password
         if (!passwordEncoder.matches(changePasswordRequest.getCurrentPassword(), user.getPassword())) {
             throw new RuntimeException("Current password is incorrect");
         }
 
-        // Validate new password
         if (isInvalidPassword(changePasswordRequest.getNewPassword())) {
             throw new RuntimeException("New password does not meet complexity requirements");
         }
 
-        // Check if new password is different from the current one
         if (passwordEncoder.matches(changePasswordRequest.getNewPassword(), user.getPassword())) {
             throw new RuntimeException("New password must be different from the current password");
         }
 
-        // Change password
         String encodedPassword = passwordEncoder.encode(changePasswordRequest.getNewPassword());
         user.setPassword(encodedPassword);
         user.setUpdatedAt(LocalDateTime.now());
@@ -198,7 +192,7 @@ public class UserService {
 
     public String checkUserLockStatus(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("Tài khoản không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with username:" + username));
         if (user != null && user.isLocked()) {
             String lockReason = user.getLockReason();
             LocalDateTime expirationDate = user.getLockExpirationDate();
@@ -278,7 +272,7 @@ public class UserService {
         return new UserStatus(status, timestamp);
     }
 
-    @Scheduled(fixedRate = 60000) // Run every minute
+    @Scheduled(fixedRate = 60000)
     public void cleanupOldStatus() {
         Set<Object> keys = redisTemplate.opsForHash().keys(USER_STATUS_KEY);
         long now = Instant.now().toEpochMilli();

@@ -8,7 +8,6 @@ import com.example.RoomBooking.specifications.PropertySpecifications;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.lettuce.core.RedisCommandExecutionException;
 import jakarta.transaction.Transactional;
-import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -28,38 +27,41 @@ import java.util.stream.Collectors;
 @Service
 public class PropertyService {
 
-    @Autowired
-    private PropertyRepository propertyRepository;
-
-    @Autowired
-    private CategoryRepository categoryRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private AmenityRepository amenityRepository;
-
-    @Autowired
-    private TourRequestRepository tourRequestRepository;
-
-    @Autowired
-    private LocationRepository locationRepository;
-
-    @Autowired
-    private DetailRepository detailRepository;
-
-    @Autowired
-    private NearbyPlaceRepository nearbyPlaceRepository;
-
-    @Autowired
-    private RedisTemplate<String, String> redisTemplate;
-
+    private final PropertyRepository propertyRepository;
+    private final CategoryRepository categoryRepository;
+    private final UserRepository userRepository;
+    private final AmenityRepository amenityRepository;
+    private final TourRequestRepository tourRequestRepository;
+    private final LocationRepository locationRepository;
+    private final DetailRepository detailRepository;
+    private final NearbyPlaceRepository nearbyPlaceRepository;
+    private final RedisTemplate<String, String> redisTemplate;
     private static final String TEMP_PROPERTY_PREFIX = "temp_property:";
     private static final int TEMP_PROPERTY_EXPIRY = 30;
+    private final ObjectMapper objectMapper;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    public PropertyService(PropertyRepository propertyRepository,
+                           CategoryRepository categoryRepository,
+                           UserRepository userRepository,
+                           AmenityRepository amenityRepository,
+                           TourRequestRepository tourRequestRepository,
+                           LocationRepository locationRepository,
+                           DetailRepository detailRepository,
+                           NearbyPlaceRepository nearbyPlaceRepository,
+                           RedisTemplate<String, String> redisTemplate,
+                           ObjectMapper objectMapper) {
+        this.propertyRepository = propertyRepository;
+        this.categoryRepository = categoryRepository;
+        this.userRepository = userRepository;
+        this.amenityRepository = amenityRepository;
+        this.tourRequestRepository = tourRequestRepository;
+        this.locationRepository = locationRepository;
+        this.detailRepository = detailRepository;
+        this.nearbyPlaceRepository = nearbyPlaceRepository;
+        this.redisTemplate = redisTemplate;
+        this.objectMapper = objectMapper;
+    }
 
     public Page<PropertyResponse> getAvailableProperties(Pageable pageable) {
         return propertyRepository.findByIsAvailableTrue(pageable).map(this::mapToResponse);
@@ -86,13 +88,13 @@ public class PropertyService {
 
     public Page<PropertyResponse> searchNearBy(String location, Long propertyId, Pageable pageable) {
         if (location == null || location.trim().isEmpty()) {
-            throw new IllegalArgumentException("Location cannot be null or empty");
+            throw new IllegalArgumentException("Location must not be empty!");
         }
 
         Page<Property> nearbyProperties = propertyRepository.searchNearBy(location, propertyId, pageable);
 
         if (nearbyProperties.isEmpty()) {
-            throw new ResourceNotFoundException("No available Nearby Property");
+            throw new ResourceNotFoundException("No nearby properties found!");
         }
 
         return nearbyProperties.map(this::mapToResponse);
@@ -119,7 +121,6 @@ public class PropertyService {
 
         Property savedProperty = propertyRepository.save(property);
 
-        // Save nearby places
         if (propertyRequest.getNearbyPlaces() != null) {
             for (NearbyPlaceDTO placeDTO : propertyRequest.getNearbyPlaces()) {
                 NearbyPlace nearbyPlace = new NearbyPlace();
@@ -142,7 +143,6 @@ public class PropertyService {
 
         Property savedProperty = propertyRepository.save(property);
 
-        // Update nearby places
         nearbyPlaceRepository.deleteByPropertyId(propertyId);
         if (propertyRequest.getNearbyPlaces() != null) {
             for (NearbyPlaceDTO placeDTO : propertyRequest.getNearbyPlaces()) {

@@ -2,6 +2,7 @@ package com.example.RoomBooking.services;
 
 import com.example.RoomBooking.dto.TourRequestDTO;
 import com.example.RoomBooking.models.TourRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 
+@Slf4j
 @Service
 public class EmailService {
 
@@ -38,7 +40,7 @@ public class EmailService {
 
             emailSender.send(message);
         } catch (MessagingException e) {
-            e.printStackTrace();
+            log.error("❌ Lỗi khi gửi email xác nhận đến: {}", tourRequest.getEmail(), e);
         }
     }
 
@@ -87,7 +89,7 @@ public class EmailService {
 
             emailSender.send(message);
         } catch (MessagingException e) {
-            e.printStackTrace();
+            log.error("❌ Lỗi khi gửi email cập nhật trạng thái từ '{}' → '{}' cho: {}", oldStatus, newStatus, tourRequest.getEmail(), e);
         }
     }
 
@@ -132,7 +134,7 @@ public class EmailService {
 
             emailSender.send(message);
         } catch (MessagingException e) {
-            e.printStackTrace();
+            log.error("❌ Lỗi khi gửi email nhắc nhở cho: {}", toEmail, e);
         }
     }
 
@@ -243,7 +245,7 @@ public class EmailService {
 
         String htmlContent = createPropertyInquiryEmailContent(name, email, phoneNumber, propertyId, message);
 
-        helper.setTo(fromEmail); // Gửi đến địa chỉ email của công ty
+        helper.setTo(fromEmail);
         helper.setSubject("🏠 Yêu cầu thông tin bất động sản mới");
         helper.setText(htmlContent, true);
         helper.setFrom(fromEmail);

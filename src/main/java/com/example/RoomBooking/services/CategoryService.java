@@ -2,10 +2,10 @@ package com.example.RoomBooking.services;
 
 import com.example.RoomBooking.dto.CategoryRequest;
 import com.example.RoomBooking.dto.CategoryResponse;
+import com.example.RoomBooking.exceptions.ResourceAlreadyExistsException;
 import com.example.RoomBooking.exceptions.ResourceNotFoundException;
 import com.example.RoomBooking.models.Category;
 import com.example.RoomBooking.repositories.CategoryRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,9 +13,11 @@ import java.util.stream.Collectors;
 
 @Service
 public class CategoryService {
+    private final CategoryRepository categoryRepository;
 
-    @Autowired
-    private CategoryRepository categoryRepository;
+    public CategoryService(CategoryRepository categoryRepository) {
+        this.categoryRepository = categoryRepository;
+    }
 
     public List<CategoryResponse> getAllCategories() {
         List<Category> categories = categoryRepository.findAll();
@@ -27,7 +29,7 @@ public class CategoryService {
     public void addCategory(CategoryRequest request) {
         boolean exists = categoryRepository.existsByCategoryNameIgnoreCase(request.getCategoryName());
         if (exists) {
-            throw new RuntimeException("Loại phòng này đã tồn tại !");
+            throw new ResourceAlreadyExistsException("Category already exists !");
         }
         Category category = new Category();
         category.setCategoryName(request.getCategoryName());
@@ -47,7 +49,7 @@ public class CategoryService {
 
         boolean exists = categoryRepository.existsByCategoryNameIgnoreCase(request.getCategoryName());
         if (exists && !category.getCategoryName().equalsIgnoreCase(request.getCategoryName())) {
-            throw new RuntimeException("Loại phòng này đã tồn tại !");
+            throw new ResourceAlreadyExistsException("Category already exists !");
         }
 
         category.setCategoryName(request.getCategoryName());

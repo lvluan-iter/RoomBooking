@@ -27,7 +27,6 @@ public class PropertySpecifications {
                     criteriaBuilder.greaterThanOrEqualTo(root.get("expirationDate"), LocalDateTime.now())
             ));
 
-            // Keyword search (title, description, address)
             if (searchDTO.getKeyword() != null && !searchDTO.getKeyword().isEmpty()) {
                 String lowercaseKeyword = "%" + searchDTO.getKeyword().toLowerCase() + "%";
                 predicates.add(criteriaBuilder.or(

@@ -26,12 +26,8 @@ public class CategoryController {
 
     @PostMapping
     public ResponseEntity<String> addCategory(@RequestBody CategoryRequest categoryRequest) {
-        try {
-            categoryService.addCategory(categoryRequest);
-            return ResponseEntity.ok("Category added successfully.");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+        categoryService.addCategory(categoryRequest);
+        return ResponseEntity.ok("Category added successfully.");
     }
 
     @DeleteMapping("/{categoryId}")
@@ -42,14 +38,7 @@ public class CategoryController {
 
     @PutMapping("/{categoryId}")
     public ResponseEntity<String> updateCategory(@PathVariable Long categoryId, @RequestBody CategoryRequest categoryRequest) {
-        try {
-            categoryService.updateCategory(categoryId, categoryRequest);
-            return ResponseEntity.ok("Category updated successfully.");
-        } catch (ResourceNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+        categoryService.updateCategory(categoryId, categoryRequest);
+        return ResponseEntity.ok("Category updated successfully.");
     }
-
 }
