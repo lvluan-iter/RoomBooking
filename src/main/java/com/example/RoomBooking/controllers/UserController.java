@@ -6,6 +6,7 @@ import com.example.RoomBooking.models.UserStatus;
 import com.example.RoomBooking.models.UserStatusUpdate;
 import com.example.RoomBooking.services.JwtTokenProvider;
 import com.example.RoomBooking.services.UserService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,18 +19,13 @@ import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 import java.util.List;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private JwtTokenProvider tokenProvider;
-
-    @Autowired
-    private SimpMessagingTemplate messagingTemplate;
+    private final UserService userService;
+    private final JwtTokenProvider tokenProvider;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @GetMapping
     public ResponseEntity<List<UserResponse>> getAllUsers() {

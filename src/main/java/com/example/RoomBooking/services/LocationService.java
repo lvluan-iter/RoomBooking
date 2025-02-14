@@ -4,19 +4,16 @@ import com.example.RoomBooking.dto.LocationDTO;
 import com.example.RoomBooking.exceptions.ResourceNotFoundException;
 import com.example.RoomBooking.models.Location;
 import com.example.RoomBooking.repositories.LocationRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @Service
 public class LocationService {
-
     private final LocationRepository locationRepository;
-
-    public LocationService(LocationRepository locationRepository) {
-        this.locationRepository = locationRepository;
-    }
 
     public LocationDTO createLocation(LocationDTO locationDTO) {
         Location location = Location.builder()

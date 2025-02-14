@@ -3,23 +3,18 @@ package com.example.RoomBooking.controllers;
 import com.example.RoomBooking.dto.TourRequestDTO;
 import com.example.RoomBooking.models.TourRequest;
 import com.example.RoomBooking.services.TourRequestService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/tour-requests")
 public class TourRequestController {
-
     private final TourRequestService tourRequestService;
-
-    @Autowired
-    public TourRequestController(TourRequestService tourRequestService) {
-        this.tourRequestService = tourRequestService;
-    }
 
     @PostMapping
     public ResponseEntity<TourRequestDTO> createTourRequest(@RequestBody TourRequestDTO tourRequest) {

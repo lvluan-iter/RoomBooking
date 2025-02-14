@@ -2,18 +2,18 @@ package com.example.RoomBooking.controllers;
 
 import com.example.RoomBooking.dto.LocationDTO;
 import com.example.RoomBooking.services.LocationService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/location")
 public class LocationController {
-    @Autowired
-    private LocationService locationService;
+    private final LocationService locationService;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('Owner', 'Admin')")

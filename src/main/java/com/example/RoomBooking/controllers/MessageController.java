@@ -4,6 +4,7 @@ import com.example.RoomBooking.dto.*;
 import com.example.RoomBooking.models.Message;
 import com.example.RoomBooking.models.User;
 import com.example.RoomBooking.services.MessageService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -16,14 +17,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @Controller
 public class MessageController {
-
-    @Autowired
-    private SimpMessagingTemplate messagingTemplate;
-
-    @Autowired
-    private MessageService messageService;
+    private final SimpMessagingTemplate messagingTemplate;
+    private final MessageService messageService;
 
     @MessageMapping("/chat")
     public void processMessage(@Payload MessageDTO messageDTO) {

@@ -2,18 +2,17 @@ package com.example.RoomBooking.controllers;
 
 import com.example.RoomBooking.dto.AmenityDTO;
 import com.example.RoomBooking.services.AmenityService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/amenities")
 public class AmenityController {
-
-    @Autowired
-    private AmenityService amenityService;
+    private final AmenityService amenityService;
 
     @GetMapping
     public ResponseEntity<List<AmenityDTO>> getAllAmenities() {

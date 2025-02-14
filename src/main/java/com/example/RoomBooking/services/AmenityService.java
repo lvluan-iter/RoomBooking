@@ -4,18 +4,16 @@ import com.example.RoomBooking.dto.AmenityDTO;
 import com.example.RoomBooking.exceptions.ResourceNotFoundException;
 import com.example.RoomBooking.models.Amenity;
 import com.example.RoomBooking.repositories.AmenityRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @Service
 public class AmenityService {
     private final AmenityRepository amenityRepository;
-
-    public AmenityService(AmenityRepository amenityRepository) {
-        this.amenityRepository = amenityRepository;
-    }
 
     public List<AmenityDTO> getAllAmenities() {
         List<Amenity> amenities = amenityRepository.findAll();

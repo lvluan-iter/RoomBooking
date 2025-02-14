@@ -5,6 +5,7 @@ import com.example.RoomBooking.models.Message;
 import com.example.RoomBooking.models.User;
 import com.example.RoomBooking.repositories.MessageRepository;
 import com.example.RoomBooking.dto.ConversationDTO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -13,14 +14,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @Service
 public class MessageService {
-
     private final MessageRepository messageRepository;
-
-    public MessageService(MessageRepository messageRepository) {
-        this.messageRepository = messageRepository;
-    }
 
     public int getUnreadMessageCount(Long recipientId) {
         return messageRepository.countByRecipientIdAndStatus(recipientId, Message.MessageStatus.SENT);

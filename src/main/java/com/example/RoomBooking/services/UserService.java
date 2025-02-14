@@ -9,7 +9,7 @@ import com.example.RoomBooking.repositories.RoleRepository;
 import com.example.RoomBooking.repositories.UserRepository;
 import jakarta.mail.MessagingException;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -21,33 +21,20 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @Service
 public class UserService {
-
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PropertyRepository propertyRepository;
     private final PropertyService propertyService;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
-
-    @Autowired
-    private RedisTemplate<String, String> redisTemplate;
-
+    private final RedisTemplate<String, String> redisTemplate;
     private static final String USER_STATUS_KEY = "user_status";
     private static final long OFFLINE_THRESHOLD = 120000;
-
     @Value("${spring.mail.username}")
     private String fromEmail;
-
-    public UserService(UserRepository userRepository, RoleRepository roleRepository, PropertyRepository propertyRepository, PasswordEncoder passwordEncoder, EmailService emailService, PropertyService propertyService) {
-        this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
-        this.propertyRepository = propertyRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.emailService = emailService;
-        this.propertyService = propertyService;
-    }
 
     public void registerUser(RegisterRequest registerRequest) {
         if (userRepository.existsByUsername(registerRequest.getUsername())) {

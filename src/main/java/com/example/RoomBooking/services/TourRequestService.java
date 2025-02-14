@@ -7,7 +7,7 @@ import com.example.RoomBooking.models.TourRequest;
 import com.example.RoomBooking.repositories.PropertyRepository;
 import com.example.RoomBooking.repositories.TourRequestRepository;
 import com.example.RoomBooking.repositories.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,22 +18,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @Service
 @Transactional
 public class TourRequestService {
-
     private final TourRequestRepository tourRequestRepository;
     private final EmailService emailService;
     private final UserRepository userRepository;
     private final PropertyRepository propertyRepository;
-
-    @Autowired
-    public TourRequestService(TourRequestRepository tourRequestRepository, EmailService emailService, UserRepository userRepository, PropertyRepository propertyRepository) {
-        this.tourRequestRepository = tourRequestRepository;
-        this.emailService = emailService;
-        this.userRepository = userRepository;
-        this.propertyRepository = propertyRepository;
-    }
 
     public TourRequestDTO createTourRequest(TourRequestDTO requestDTO) {
         TourRequest tourRequest = mapToEntity(requestDTO);

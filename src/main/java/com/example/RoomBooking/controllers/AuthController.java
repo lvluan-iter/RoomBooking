@@ -3,11 +3,10 @@ package com.example.RoomBooking.controllers;
 import com.example.RoomBooking.dto.*;
 import com.example.RoomBooking.exceptions.ResourceNotFoundException;
 import com.example.RoomBooking.services.JwtTokenProvider;
-import com.example.RoomBooking.services.UserDetailsImpl;
 import com.example.RoomBooking.services.UserDetailsServiceImpl;
 import com.example.RoomBooking.services.UserService;
 import jakarta.mail.MessagingException;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -17,20 +16,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private AuthenticationManager authenticationManager;
-
-    @Autowired
-    private JwtTokenProvider jwtTokenProvider;
-
-    @Autowired
-    private UserDetailsServiceImpl userDetailsService;
+    private final UserService userService;
+    private final AuthenticationManager authenticationManager;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final UserDetailsServiceImpl userDetailsService;
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody RegisterRequest registerRequest) {

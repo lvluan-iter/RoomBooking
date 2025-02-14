@@ -6,7 +6,7 @@ import com.example.RoomBooking.exceptions.ResourceNotFoundException;
 import com.example.RoomBooking.models.Property;
 import com.example.RoomBooking.repositories.PropertyRepository;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Mac;
@@ -17,18 +17,12 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+@RequiredArgsConstructor
 @Service
 public class VNPayService {
-    @Autowired
     private final VNPayConfig vnPayConfig;
+    private final PropertyRepository propertyRepository;
     private static final long FIXED_AMOUNT = 100000;
-
-    @Autowired
-    private PropertyRepository propertyRepository;
-
-    public VNPayService(VNPayConfig vnPayConfig) {
-        this.vnPayConfig = vnPayConfig;
-    }
 
     public String createPaymentUrl(PropertyRequest propertyRequest, String reference, HttpServletRequest request) {
         Map<String, String> vnp_Params = new HashMap<>();

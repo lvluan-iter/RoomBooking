@@ -3,7 +3,7 @@ package com.example.RoomBooking.controllers;
 import com.example.RoomBooking.dto.ConversationDTO;
 import com.example.RoomBooking.dto.InitialDataDTO;
 import com.example.RoomBooking.services.MessageService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
@@ -11,11 +11,10 @@ import org.springframework.stereotype.Controller;
 import java.security.Principal;
 import java.util.List;
 
+@RequiredArgsConstructor
 @Controller
 public class InitialDataController {
-
-    @Autowired
-    private MessageService messageService;
+    private final MessageService messageService;
 
     @MessageMapping("/get-initial-data")
     @SendToUser("/queue/initial-data")

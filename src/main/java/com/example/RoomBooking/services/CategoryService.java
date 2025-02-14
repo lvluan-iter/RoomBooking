@@ -6,18 +6,16 @@ import com.example.RoomBooking.exceptions.ResourceAlreadyExistsException;
 import com.example.RoomBooking.exceptions.ResourceNotFoundException;
 import com.example.RoomBooking.models.Category;
 import com.example.RoomBooking.repositories.CategoryRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @Service
 public class CategoryService {
     private final CategoryRepository categoryRepository;
-
-    public CategoryService(CategoryRepository categoryRepository) {
-        this.categoryRepository = categoryRepository;
-    }
 
     public List<CategoryResponse> getAllCategories() {
         List<Category> categories = categoryRepository.findAll();
@@ -56,7 +54,6 @@ public class CategoryService {
         category.setImageUrl(request.getImageUrl());
         categoryRepository.save(category);
     }
-
 
     private CategoryResponse mapToResponse(Category category) {
         CategoryResponse response = new CategoryResponse();

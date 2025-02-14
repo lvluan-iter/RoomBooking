@@ -2,21 +2,16 @@ package com.example.RoomBooking.services;
 
 import com.example.RoomBooking.models.Detail;
 import com.example.RoomBooking.repositories.DetailRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.Optional;
 
+@RequiredArgsConstructor
 @Service
 public class DetailService {
-
-    @Autowired
     private final DetailRepository detailRepository;
-
-    public DetailService(DetailRepository detailRepository) {
-        this.detailRepository = detailRepository;
-    }
 
     public void createDetail(Long userId, String name, BigDecimal amount) {
         Detail detail = new Detail(userId, name, amount);

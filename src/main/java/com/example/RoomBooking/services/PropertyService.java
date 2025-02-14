@@ -8,7 +8,7 @@ import com.example.RoomBooking.specifications.PropertySpecifications;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.lettuce.core.RedisCommandExecutionException;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,9 +24,9 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @Service
 public class PropertyService {
-
     private final PropertyRepository propertyRepository;
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
@@ -39,29 +39,6 @@ public class PropertyService {
     private static final String TEMP_PROPERTY_PREFIX = "temp_property:";
     private static final int TEMP_PROPERTY_EXPIRY = 30;
     private final ObjectMapper objectMapper;
-
-    @Autowired
-    public PropertyService(PropertyRepository propertyRepository,
-                           CategoryRepository categoryRepository,
-                           UserRepository userRepository,
-                           AmenityRepository amenityRepository,
-                           TourRequestRepository tourRequestRepository,
-                           LocationRepository locationRepository,
-                           DetailRepository detailRepository,
-                           NearbyPlaceRepository nearbyPlaceRepository,
-                           RedisTemplate<String, String> redisTemplate,
-                           ObjectMapper objectMapper) {
-        this.propertyRepository = propertyRepository;
-        this.categoryRepository = categoryRepository;
-        this.userRepository = userRepository;
-        this.amenityRepository = amenityRepository;
-        this.tourRequestRepository = tourRequestRepository;
-        this.locationRepository = locationRepository;
-        this.detailRepository = detailRepository;
-        this.nearbyPlaceRepository = nearbyPlaceRepository;
-        this.redisTemplate = redisTemplate;
-        this.objectMapper = objectMapper;
-    }
 
     public Page<PropertyResponse> getAvailableProperties(Pageable pageable) {
         return propertyRepository.findByIsAvailableTrue(pageable).map(this::mapToResponse);

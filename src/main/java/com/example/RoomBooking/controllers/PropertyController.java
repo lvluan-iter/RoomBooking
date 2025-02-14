@@ -8,7 +8,7 @@ import com.example.RoomBooking.services.DetailService;
 import com.example.RoomBooking.services.PropertyService;
 import com.example.RoomBooking.services.VNPayService;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,32 +25,15 @@ import java.time.YearMonth;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/properties")
 public class PropertyController {
-
-    @Autowired
     private final PropertyService propertyService;
-
-    @Autowired
     private final VNPayService vnPayService;
-
-    @Autowired
     private final DetailService detailService;
-
-    @Autowired
     private final PropertyRepository propertyRepository;
-
-    @Autowired
     private final RedisTemplate<String, String> redisTemplate;
-
-    public PropertyController(PropertyService propertyService, VNPayService vnPayService, DetailService detailService, PropertyRepository propertyRepository, RedisTemplate<String, String> redisTemplate) {
-        this.propertyService = propertyService;
-        this.vnPayService = vnPayService;
-        this.detailService = detailService;
-        this.propertyRepository = propertyRepository;
-        this.redisTemplate = redisTemplate;
-    }
 
     @GetMapping
     @PreAuthorize("permitAll()")

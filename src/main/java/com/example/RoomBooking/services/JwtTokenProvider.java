@@ -36,7 +36,7 @@ public class JwtTokenProvider {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpiration * 1000L);
         return Jwts.builder()
-                .setSubject(userDetails.getUsername())
+                .setSubject(userDetails.username())
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(key, SignatureAlgorithm.HS512)
