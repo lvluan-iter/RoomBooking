@@ -1,5 +1,6 @@
 package com.example.RoomBooking.services;
 
+import com.example.RoomBooking.dto.JwtAuthenticationResponse;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
@@ -31,16 +32,22 @@ public class JwtTokenProvider {
         this.key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
-    public String generateToken(Authentication authentication) {
+    public JwtAuthenticationResponse generateToken(Authentication authentication) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpiration * 1000L);
-        return Jwts.builder()
+
+        String token = Jwts.builder()
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(key, SignatureAlgorithm.HS512)
                 .compact();
+
+        Long expiresAt = expiryDate.getTime();
+
+        return new JwtAuthenticationResponse(token, expiresAt);
     }
 
     public String getUsernameFromToken(String token) {
