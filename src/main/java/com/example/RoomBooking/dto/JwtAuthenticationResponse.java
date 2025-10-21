@@ -9,6 +9,7 @@ import lombok.*;
 @Builder
 public class JwtAuthenticationResponse {
     private String token;
+    private Long expire;
 
 }
 

@@ -43,8 +43,7 @@ public class AuthController {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        String jwt = jwtTokenProvider.generateToken(authentication);
-        return ResponseEntity.ok(new JwtAuthenticationResponse(jwt));
+        return ResponseEntity.ok(jwtTokenProvider.generateToken(authentication));
     }
 
     @PostMapping("/forgot-password")
@@ -76,8 +75,7 @@ public class AuthController {
             String username = jwtTokenProvider.getUsernameFromToken(token);
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
             Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-            String newToken = jwtTokenProvider.generateToken(authentication);
-            return ResponseEntity.ok(new JwtAuthenticationResponse(newToken));
+            return ResponseEntity.ok(jwtTokenProvider.generateToken(authentication));
         } else {
             return ResponseEntity.badRequest().body("Invalid token");
         }
