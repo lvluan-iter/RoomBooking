@@ -100,6 +100,14 @@ public class UserService {
         userRepository.save(user);
     }
 
+    public void deleteUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
+        redisTemplate.opsForHash().delete(USER_STATUS_KEY, userId.toString());
+        userRepository.delete(user);
+    }
+
     public void changePassword(Long userId, ChangePasswordRequest changePasswordRequest) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
