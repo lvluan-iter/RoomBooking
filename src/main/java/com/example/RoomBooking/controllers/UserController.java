@@ -14,6 +14,8 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -57,6 +59,30 @@ public class UserController {
     public ResponseEntity<?> updateUser(@PathVariable Long userId, @RequestBody UserRequest userRequest) {
         userService.updateUser(userId, userRequest);
         return ResponseEntity.ok("User updated successfully.");
+    }
+
+    @DeleteMapping("/{userId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<String> deleteUser(
+            @PathVariable Long userId,
+            Authentication authentication) {
+
+        String currentUsername = authentication.getName();
+        UserResponse currentUser = userService.getUserByUsername(currentUsername);
+
+        if (!currentUser.getId().equals(userId) &&
+                !currentUser.getRoles().contains("ADMIN")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("You don't have permission to delete this account");
+        }
+
+        if (currentUser.getRoles().contains("ADMIN")) {
+            userService.deleteUser(userId);
+            return ResponseEntity.ok("User permanently deleted successfully");
+        }
+
+        userService.deleteUser(currentUser.getId());
+        return ResponseEntity.ok("Your account has been deleted");
     }
 
     @PutMapping("/{userId}/password")
