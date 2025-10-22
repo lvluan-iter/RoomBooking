@@ -63,7 +63,7 @@ public class UserController {
 
     @DeleteMapping("/{userId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<String> deleteUser(
+    public ResponseEntity<?> deleteUser(
             @PathVariable Long userId,
             Authentication authentication) {
 
@@ -73,7 +73,7 @@ public class UserController {
         if (!currentUser.getId().equals(userId) &&
                 !currentUser.getRoles().contains("ADMIN")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body("You don't have permission to delete this account");
+                    .body(ApiResult.fail("You don't have permission to delete this account"));
         }
 
         if (currentUser.getRoles().contains("ADMIN")) {
