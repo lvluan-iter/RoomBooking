@@ -51,14 +51,12 @@ public class AuthController {
         try {
             userService.initiatePasswordReset(request.getEmail());
             return ResponseEntity.ok("Reset password email sent successfully");
-        } catch (ResourceNotFoundException e) {
-            return ResponseEntity.ok("If an account exists with this email, a reset password link will be sent");
         } catch (MessagingException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to send reset password email. Please try again later.");
+                    .body(ApiResult.fail("Failed to send reset password email. Please try again later."));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("An unexpected error occurred. Please try again later.");
+                    .body(ApiResult.fail("An unexpected error occurred. Please try again later."));
         }
     }
 
@@ -77,7 +75,7 @@ public class AuthController {
             Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
             return ResponseEntity.ok(jwtTokenProvider.generateToken(authentication));
         } else {
-            return ResponseEntity.badRequest().body("Invalid token");
+            return ResponseEntity.badRequest().body(ApiResult.fail("Invalid token"));
         }
     }
 }

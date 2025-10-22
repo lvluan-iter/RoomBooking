@@ -1,5 +1,6 @@
 package com.example.RoomBooking.exceptions;
 
+import com.example.RoomBooking.dto.ApiResult;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -13,36 +14,36 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     protected ResponseEntity<Object> handleResourceNotFoundException(ResourceNotFoundException ex) {
-        ApiError apiError = new ApiError(HttpStatus.NOT_FOUND, ex.getMessage());
-        return buildResponseEntity(apiError);
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiResult.fail(ex.getMessage()));
     }
 
     @ExceptionHandler(ResourceAlreadyExistsException.class)
     protected ResponseEntity<Object> handleResourceAlreadyExistsException(ResourceAlreadyExistsException ex) {
-        ApiError apiError = new ApiError(HttpStatus.CONFLICT, ex.getMessage());
-        return buildResponseEntity(apiError);
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiResult.fail(ex.getMessage()));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     protected ResponseEntity<Object> handleIllegalArgumentException(IllegalArgumentException ex) {
-        ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST, ex.getMessage());
-        return buildResponseEntity(apiError);
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResult.fail(ex.getMessage()));
     }
 
     @ExceptionHandler(IOException.class)
     protected ResponseEntity<Object> handleIOException(IOException ex) {
-        ApiError apiError = new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
-        return buildResponseEntity(apiError);
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResult.fail(ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
     protected ResponseEntity<Object> handleGenericException(Exception ex) {
-        ApiError apiError = new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
-        return buildResponseEntity(apiError);
-    }
-
-    private ResponseEntity<Object> buildResponseEntity(ApiError apiError) {
-        return new ResponseEntity<>(apiError, apiError.getStatus());
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResult.fail(ex.getMessage()));
     }
 }
-
