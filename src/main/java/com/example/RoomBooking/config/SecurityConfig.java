@@ -31,7 +31,7 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/api/auth/**", "/api/properties/available", "/api/properties/{id}", "/api/users/id/**", "/api/users",
+                        .requestMatchers("/api/auth/**", "/api/properties/available", "/api/properties/{id}", "/api/users/id/**", "/api/users", "/api/health",
                                 "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/api/bookings/**", "/api/users/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/tour-requests/**").permitAll()
