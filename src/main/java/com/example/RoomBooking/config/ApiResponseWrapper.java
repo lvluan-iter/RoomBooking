@@ -28,6 +28,10 @@ public class ApiResponseWrapper implements ResponseBodyAdvice<Object> {
             return body;
         }
 
+        if (body instanceof String) {
+            return ApiResult.success(body); 
+        }
+
         return ApiResult.success(body);
     }
 }
