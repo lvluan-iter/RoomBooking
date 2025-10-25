@@ -17,28 +17,28 @@ public class LocationController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('Owner', 'Admin')")
-    public ResponseEntity<LocationDTO> createLocation(@RequestBody LocationDTO locationDTO) {
+    public ResponseEntity<?> createLocation(@RequestBody LocationDTO locationDTO) {
         LocationDTO createdLocation = locationService.createLocation(locationDTO);
         return ResponseEntity.ok(createdLocation);
     }
 
     @GetMapping
     @PreAuthorize("permitAll()")
-    public ResponseEntity<List<LocationDTO>> getAllLocations() {
+    public ResponseEntity<?> getAllLocations() {
         List<LocationDTO> response = locationService.getAllLocations();
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("permitAll()")
-    public ResponseEntity<LocationDTO> getLocationById(@PathVariable Long id) {
+    public ResponseEntity<?> getLocationById(@PathVariable Long id) {
         LocationDTO location = locationService.getLocationById(id);
         return ResponseEntity.ok(location);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('Owner', 'Admin')")
-    public ResponseEntity<LocationDTO> updateLocation(
+    public ResponseEntity<?> updateLocation(
             @PathVariable Long id,
             @RequestBody LocationDTO locationDTO) {
         LocationDTO updatedLocation = locationService.updateLocation(id, locationDTO);
@@ -47,7 +47,7 @@ public class LocationController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('Owner', 'Admin')")
-    public ResponseEntity<Void> deleteLocation(@PathVariable Long id) {
+    public ResponseEntity<?> deleteLocation(@PathVariable Long id) {
         locationService.deleteLocation(id);
         return ResponseEntity.noContent().build();
     }

@@ -15,19 +15,19 @@ public class AmenityController {
     private final AmenityService amenityService;
 
     @GetMapping
-    public ResponseEntity<List<AmenityDTO>> getAllAmenities() {
+    public ResponseEntity<?> getAllAmenities() {
         List<AmenityDTO> amenities = amenityService.getAllAmenities();
         return ResponseEntity.ok(amenities);
     }
 
     @PostMapping
-    public ResponseEntity<AmenityDTO> createAmenity(@RequestBody AmenityDTO amenityDTO) {
+    public ResponseEntity<?> createAmenity(@RequestBody AmenityDTO amenityDTO) {
         AmenityDTO createdAmenity = amenityService.createAmenity(amenityDTO);
         return ResponseEntity.ok(createdAmenity);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<AmenityDTO> updateAmenity(
+    public ResponseEntity<?> updateAmenity(
             @PathVariable Long id,
             @RequestBody AmenityDTO amenityDTO) {
         amenityDTO.setId(id);
@@ -36,13 +36,13 @@ public class AmenityController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAmenity(@PathVariable Long id) {
+    public ResponseEntity<?> deleteAmenity(@PathVariable Long id) {
         amenityService.deleteAmenity(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AmenityDTO> getAmenityById(@PathVariable Long id) {
+    public ResponseEntity<?> getAmenityById(@PathVariable Long id) {
         AmenityDTO amenity = amenityService.getAmenityById(id);
         return ResponseEntity.ok(amenity);
     }

@@ -17,50 +17,50 @@ public class TourRequestController {
     private final TourRequestService tourRequestService;
 
     @PostMapping
-    public ResponseEntity<TourRequestDTO> createTourRequest(@RequestBody TourRequestDTO tourRequest) {
+    public ResponseEntity<?> createTourRequest(@RequestBody TourRequestDTO tourRequest) {
         TourRequestDTO createdRequest = tourRequestService.createTourRequest(tourRequest);
         return new ResponseEntity<>(createdRequest, HttpStatus.CREATED);
     }
 
     @GetMapping
-    public ResponseEntity<List<TourRequestDTO>> getAllTourRequests() {
+    public ResponseEntity<?> getAllTourRequests() {
         List<TourRequestDTO> tourRequests = tourRequestService.getAllTourRequests();
         return ResponseEntity.ok(tourRequests);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TourRequestDTO> getTourRequestById(@PathVariable Long id) {
+    public ResponseEntity<?> getTourRequestById(@PathVariable Long id) {
         return tourRequestService.getTourRequestById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/property/{propertyId}")
-    public ResponseEntity<List<TourRequestDTO>> getTourRequestsByPropertyId(@PathVariable Long propertyId) {
+    public ResponseEntity<?> getTourRequestsByPropertyId(@PathVariable Long propertyId) {
         List<TourRequestDTO> tourRequests = tourRequestService.getTourRequestsByPropertyId(propertyId);
         return ResponseEntity.ok(tourRequests);
     }
 
     @GetMapping("/email/{email}")
-    public ResponseEntity<List<TourRequestDTO>> getTourRequestsByEmail(@PathVariable String email) {
+    public ResponseEntity<?> getTourRequestsByEmail(@PathVariable String email) {
         List<TourRequestDTO> tourRequests = tourRequestService.getTourRequestsByEmail(email);
         return ResponseEntity.ok(tourRequests);
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<TourRequestDTO>> getTourRequestsByUserId(@PathVariable Long userId) {
+    public ResponseEntity<?> getTourRequestsByUserId(@PathVariable Long userId) {
         List<TourRequestDTO> requests = tourRequestService.getTourRequestsByUserId(userId);
         return ResponseEntity.ok(requests);
     }
 
     @GetMapping("/status/{status}")
-    public ResponseEntity<List<TourRequestDTO>> getTourRequestsByStatus(@PathVariable TourRequest.TourStatus status) {
+    public ResponseEntity<?> getTourRequestsByStatus(@PathVariable TourRequest.TourStatus status) {
         List<TourRequestDTO> tourRequests = tourRequestService.getTourRequestsByStatus(status);
         return ResponseEntity.ok(tourRequests);
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<TourRequestDTO> updateTourRequestStatus(
+    public ResponseEntity<?> updateTourRequestStatus(
             @PathVariable Long id,
             @RequestBody TourRequest.TourStatus status
     ) {
@@ -70,7 +70,7 @@ public class TourRequestController {
     }
 
     @PatchMapping("/{id}/date")
-    public ResponseEntity<TourRequestDTO> updateTourRequestDate(
+    public ResponseEntity<?> updateTourRequestDate(
             @PathVariable Long id,
             @RequestBody TourRequestDTO dto
     ) {
@@ -80,7 +80,7 @@ public class TourRequestController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTourRequest(@PathVariable Long id) {
+    public ResponseEntity<?> deleteTourRequest(@PathVariable Long id) {
         boolean deleted = tourRequestService.deleteTourRequest(id);
         return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
