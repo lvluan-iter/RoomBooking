@@ -40,6 +40,13 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(ApiResult.fail(ex.getMessage()));
     }
 
+    @ExceptionHandler(BadCredentialsException.class)
+    protected ResponseEntity<Object> handleBadCredentials(BadCredentialsException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResult.fail(ex.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     protected ResponseEntity<Object> handleGenericException(Exception ex) {
         return ResponseEntity
