@@ -16,25 +16,25 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @GetMapping("/")
-    public ResponseEntity<List<CategoryResponse>> getAllCategories() {
+    public ResponseEntity<?> getAllCategories() {
         List<CategoryResponse> categories = categoryService.getAllCategories();
         return ResponseEntity.ok(categories);
     }
 
     @PostMapping
-    public ResponseEntity<String> addCategory(@RequestBody CategoryRequest categoryRequest) {
+    public ResponseEntity<?> addCategory(@RequestBody CategoryRequest categoryRequest) {
         categoryService.addCategory(categoryRequest);
         return ResponseEntity.ok("Category added successfully.");
     }
 
     @DeleteMapping("/{categoryId}")
-    public ResponseEntity<String> deleteCategory(@PathVariable Long categoryId) {
+    public ResponseEntity<?> deleteCategory(@PathVariable Long categoryId) {
         categoryService.deleteCategory(categoryId);
         return ResponseEntity.ok("Category deleted successfully.");
     }
 
     @PutMapping("/{categoryId}")
-    public ResponseEntity<String> updateCategory(@PathVariable Long categoryId, @RequestBody CategoryRequest categoryRequest) {
+    public ResponseEntity<?> updateCategory(@PathVariable Long categoryId, @RequestBody CategoryRequest categoryRequest) {
         categoryService.updateCategory(categoryId, categoryRequest);
         return ResponseEntity.ok("Category updated successfully.");
     }

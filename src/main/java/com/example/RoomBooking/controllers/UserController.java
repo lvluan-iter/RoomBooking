@@ -30,25 +30,25 @@ public class UserController {
     private final SimpMessagingTemplate messagingTemplate;
 
     @GetMapping
-    public ResponseEntity<List<UserResponse>> getAllUsers() {
+    public ResponseEntity<?> getAllUsers() {
         List<UserResponse> users = userService.getAllUsers();
         return ResponseEntity.ok(users);
     }
 
     @GetMapping("/id/{userId}")
-    public ResponseEntity<UserResponse> getUserById(@PathVariable Long userId) {
+    public ResponseEntity<?> getUserById(@PathVariable Long userId) {
         UserResponse user = userService.getUserById(userId);
         return ResponseEntity.ok(user);
     }
 
     @GetMapping("/username/{userName}")
-    public  ResponseEntity<UserResponse> getUserByUsername(@PathVariable String userName) {
+    public  ResponseEntity<?> getUserByUsername(@PathVariable String userName) {
         UserResponse user = userService.getUserByUsername(userName);
         return ResponseEntity.ok(user);
     }
 
     @GetMapping("/info")
-    public ResponseEntity<UserResponse> getUserInfo(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<?> getUserInfo(@RequestHeader("Authorization") String token) {
         String jwtToken = token.substring(7);
         String username = tokenProvider.getUsernameFromToken(jwtToken);
         UserResponse user = userService.getUserByUsername(username);
@@ -92,7 +92,7 @@ public class UserController {
     }
 
     @PostMapping("/{userId}/favorites/{propertyId}")
-    public ResponseEntity<String> addPropertyToFavorites(@PathVariable Long userId, @PathVariable Long propertyId) {
+    public ResponseEntity<?> addPropertyToFavorites(@PathVariable Long userId, @PathVariable Long propertyId) {
         userService.addPropertyToFavorites(userId, propertyId);
         return ResponseEntity.ok("Property added to favorites successfully");
     }
@@ -104,7 +104,7 @@ public class UserController {
     }
 
     @GetMapping("/status/{userId}")
-    public ResponseEntity<UserStatus> getUserStatus(@PathVariable Long userId) {
+    public ResponseEntity<?> getUserStatus(@PathVariable Long userId) {
         UserStatus status = userService.getUserStatus(userId);
 
         if (status == null) {

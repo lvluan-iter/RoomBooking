@@ -37,14 +37,14 @@ public class PropertyController {
 
     @GetMapping
     @PreAuthorize("permitAll()")
-    public ResponseEntity<List<PropertyResponse>> getAllProperties() {
+    public ResponseEntity<?> getAllProperties() {
         List<PropertyResponse> response = propertyService.getAllProperties();
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/available")
     @PreAuthorize("permitAll()")
-    public ResponseEntity<Page<PropertyResponse>> getAvailableProperties(
+    public ResponseEntity<?> getAvailableProperties(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "9") int size) {
         Page<PropertyResponse> properties = propertyService.getAvailableProperties(PageRequest.of(page, size));
@@ -53,7 +53,7 @@ public class PropertyController {
 
     @PostMapping("/search")
     @PreAuthorize("permitAll()")
-    public ResponseEntity<Page<PropertyResponse>> searchProperties(
+    public ResponseEntity<?> searchProperties(
             @RequestBody PropertySearchDTO searchDTO,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
@@ -75,7 +75,7 @@ public class PropertyController {
 
     @GetMapping("/{id}")
     @PreAuthorize("permitAll()")
-    public ResponseEntity<PropertyResponse> getPropertyById(@PathVariable Long id) {
+    public ResponseEntity<?> getPropertyById(@PathVariable Long id) {
         PropertyResponse property = propertyService.getPropertyById(id);
         return ResponseEntity.ok(property);
     }
@@ -146,7 +146,7 @@ public class PropertyController {
 
     @PostMapping("/{propertyId}/extend")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Map<String, String>> extendProperty(@PathVariable Long propertyId, HttpServletRequest request) {
+    public ResponseEntity<?> extendProperty(@PathVariable Long propertyId, HttpServletRequest request) {
         String reference = UUID.randomUUID().toString();
         String paymentUrl = vnPayService.createExtensionPaymentUrl(propertyId, reference, request);
 
@@ -220,20 +220,20 @@ public class PropertyController {
 
     @GetMapping("/quick-stats/{userId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Map<String, Object>> getUserQuickStats(@PathVariable Long userId) {
+    public ResponseEntity<?> getUserQuickStats(@PathVariable Long userId) {
         Map<String, Object> quickStats = propertyService.getQuickStatsForUser(userId);
         return ResponseEntity.ok(quickStats);
     }
 
     @GetMapping("/admin/quick-stats")
     @PreAuthorize("hasAnyRole('Owner', 'Admin')")
-    public ResponseEntity<Map<String, Object>> getAdminQuickStats() {
+    public ResponseEntity<?> getAdminQuickStats() {
         Map<String, Object> quickStats = propertyService.getQuickStatsForAdmin();
         return ResponseEntity.ok(quickStats);
     }
 
     @GetMapping("/stats/{userId}")
-    public ResponseEntity<List<PropertyStats>> getPropertyStats(
+    public ResponseEntity<?> getPropertyStats(
             @PathVariable Long userId,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM") YearMonth yearMonth) {
 
@@ -243,7 +243,7 @@ public class PropertyController {
 
     @GetMapping("user/{userId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<PropertyResponse>> getPropertyForUser(@PathVariable Long userId) {
+    public ResponseEntity<?> getPropertyForUser(@PathVariable Long userId) {
         List<PropertyResponse> responses = propertyService.getPropertyForUser(userId);
         return ResponseEntity.ok(responses);
     }
@@ -257,14 +257,14 @@ public class PropertyController {
 
     @PatchMapping("/{id}/approve")
     @PreAuthorize("hasAnyRole('Owner', 'Admin')")
-    public ResponseEntity<Void> approveListing(@PathVariable("id") Long propertyId) {
+    public ResponseEntity<?> approveListing(@PathVariable("id") Long propertyId) {
         propertyService.approveListing(propertyId);
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}/reject")
     @PreAuthorize("hasAnyRole('Owner', 'Admin')")
-    public ResponseEntity<Void> rejectListing(
+    public ResponseEntity<?> rejectListing(
             @PathVariable("id") Long propertyId) {
         propertyService.rejectListing(propertyId);
         return ResponseEntity.ok().build();
@@ -272,7 +272,7 @@ public class PropertyController {
 
     @PatchMapping("/{id}/lock")
     @PreAuthorize("hasAnyRole('Owner', 'Admin')")
-    public ResponseEntity<Void> lockListing(
+    public ResponseEntity<?> lockListing(
             @PathVariable("id") Long propertyId,
             @RequestBody Map<String, Object> payload) {
         String reason = (String) payload.get("reason");
@@ -282,7 +282,7 @@ public class PropertyController {
 
     @PatchMapping("/{id}/unlock")
     @PreAuthorize("hasAnyRole('Owner', 'Admin')")
-    public ResponseEntity<Void> unlockListing(@PathVariable("id") Long propertyId) {
+    public ResponseEntity<?> unlockListing(@PathVariable("id") Long propertyId) {
         propertyService.unlockListing(propertyId);
         return ResponseEntity.ok().build();
     }
