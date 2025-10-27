@@ -27,6 +27,13 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(ApiResult.fail(ex.getMessage()));
     }
 
+    @ExceptionHandler(ForbiddenException.class)
+    protected ResponseEntity<Object> handleForbiddenException(ForbiddenException ex) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(ApiResult.fail(ex.getMessage()));
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     protected ResponseEntity<Object> handleIllegalArgumentException(IllegalArgumentException ex) {
         return ResponseEntity

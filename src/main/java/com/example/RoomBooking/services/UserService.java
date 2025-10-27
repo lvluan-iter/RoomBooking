@@ -4,6 +4,7 @@ import com.example.RoomBooking.dto.ChangePasswordRequest;
 import com.example.RoomBooking.dto.RegisterRequest;
 import com.example.RoomBooking.dto.UserRequest;
 import com.example.RoomBooking.dto.UserResponse;
+import com.example.RoomBooking.exceptions.ForbiddenException;
 import com.example.RoomBooking.exceptions.ResourceAlreadyExistsException;
 import com.example.RoomBooking.exceptions.ResourceNotFoundException;
 import com.example.RoomBooking.models.Property;
@@ -108,6 +109,33 @@ public class UserService {
         user.setPublicEmail(userRequest.isPublicEmail());
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
+    }
+
+    public void deleteUserWithPermission(String currentUsername, Long targetUserId) {
+        UserResponse currentUser = getUserByUsername(currentUsername);
+        UserResponse targetUser = getUserById(targetUserId);
+
+        boolean isSelfDelete = currentUser.getId().equals(targetUserId);
+        boolean isAdmin = currentUser.getRoles().contains("Admin");
+        boolean isOwner = currentUser.getRoles().contains("Owner");
+        boolean targetIsOwner = targetUser.getRoles().contains("Owner");
+        boolean targetIsAdmin = targetUser.getRoles().contains("Admin");
+
+        if (!isAdmin && !isOwner) {
+            if (!isSelfDelete) {
+                throw new ForbiddenException("User chỉ được tự xoá tài khoản của mình");
+            }
+        } else if (isAdmin && !isOwner) {
+            if (targetIsOwner || targetIsAdmin) {
+                throw new ForbiddenException("Admin không được xoá Owner hoặc Admin khác");
+            }
+        } else {
+            if (targetIsOwner && !isSelfDelete) {
+                throw new ForbiddenException("Owner không thể xoá Owner khác");
+            }
+        }
+
+        deleteUser(targetUserId);
     }
 
     public void deleteUser(Long userId) {

@@ -1,16 +1,12 @@
 package com.example.RoomBooking.controllers;
 
 import com.example.RoomBooking.dto.*;
-import com.example.RoomBooking.exceptions.ResourceNotFoundException;
 import com.example.RoomBooking.models.UserStatus;
 import com.example.RoomBooking.models.UserStatusUpdate;
 import com.example.RoomBooking.services.JwtTokenProvider;
 import com.example.RoomBooking.services.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -18,7 +14,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -42,7 +37,7 @@ public class UserController {
     }
 
     @GetMapping("/username/{userName}")
-    public  ResponseEntity<?> getUserByUsername(@PathVariable String userName) {
+    public ResponseEntity<?> getUserByUsername(@PathVariable String userName) {
         UserResponse user = userService.getUserByUsername(userName);
         return ResponseEntity.ok(user);
     }
@@ -67,22 +62,8 @@ public class UserController {
             @PathVariable Long userId,
             Authentication authentication) {
 
-        String currentUsername = authentication.getName();
-        UserResponse currentUser = userService.getUserByUsername(currentUsername);
-
-        if (!currentUser.getId().equals(userId) &&
-                !currentUser.getRoles().contains("ADMIN")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ApiResult.fail("You don't have permission to delete this account"));
-        }
-
-        if (currentUser.getRoles().contains("ADMIN")) {
-            userService.deleteUser(userId);
-            return ResponseEntity.ok("User permanently deleted successfully");
-        }
-
-        userService.deleteUser(currentUser.getId());
-        return ResponseEntity.ok("Your account has been deleted");
+        userService.deleteUserWithPermission(authentication.getName(), userId);
+        return ResponseEntity.ok(ApiResult.success("Deleted successfully"));
     }
 
     @PutMapping("/{userId}/password")
