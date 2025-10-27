@@ -1,7 +1,6 @@
 package com.example.RoomBooking.controllers;
 
 import com.example.RoomBooking.dto.*;
-import com.example.RoomBooking.exceptions.ResourceNotFoundException;
 import com.example.RoomBooking.services.JwtTokenProvider;
 import com.example.RoomBooking.services.UserDetailsServiceImpl;
 import com.example.RoomBooking.services.UserService;
@@ -27,8 +26,8 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody RegisterRequest registerRequest) {
-        userService.registerUser(registerRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully.");
+        UserResponse userResponse = userService.registerUser(registerRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(userResponse);
     }
 
     @PostMapping("/login")

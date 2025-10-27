@@ -1,9 +1,15 @@
 package com.example.RoomBooking.services;
 
-import com.example.RoomBooking.dto.*;
+import com.example.RoomBooking.dto.ChangePasswordRequest;
+import com.example.RoomBooking.dto.RegisterRequest;
+import com.example.RoomBooking.dto.UserRequest;
+import com.example.RoomBooking.dto.UserResponse;
 import com.example.RoomBooking.exceptions.ResourceAlreadyExistsException;
 import com.example.RoomBooking.exceptions.ResourceNotFoundException;
-import com.example.RoomBooking.models.*;
+import com.example.RoomBooking.models.Property;
+import com.example.RoomBooking.models.Role;
+import com.example.RoomBooking.models.User;
+import com.example.RoomBooking.models.UserStatus;
 import com.example.RoomBooking.repositories.PropertyRepository;
 import com.example.RoomBooking.repositories.RoleRepository;
 import com.example.RoomBooking.repositories.UserRepository;
@@ -18,7 +24,10 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -36,7 +45,7 @@ public class UserService {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
-    public void registerUser(RegisterRequest registerRequest) {
+    public UserResponse registerUser(RegisterRequest registerRequest) {
         if (userRepository.existsByUsername(registerRequest.getUsername())) {
             throw new ResourceAlreadyExistsException("Username already exists!");
         }
@@ -65,6 +74,7 @@ public class UserService {
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
+        return mapToResponse(user, true);
     }
 
     public UserResponse getUserById(Long userId) {
