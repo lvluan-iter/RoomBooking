@@ -5,6 +5,7 @@ import com.example.RoomBooking.services.JwtTokenProvider;
 import com.example.RoomBooking.services.UserDetailsServiceImpl;
 import com.example.RoomBooking.services.UserService;
 import jakarta.mail.MessagingException;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +26,7 @@ public class AuthController {
     private final UserDetailsServiceImpl userDetailsService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
         UserResponse userResponse = userService.registerUser(registerRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(userResponse);
     }
