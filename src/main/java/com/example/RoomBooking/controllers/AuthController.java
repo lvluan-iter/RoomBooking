@@ -54,9 +54,6 @@ public class AuthController {
         } catch (MessagingException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResult.fail("Failed to send reset password email. Please try again later."));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResult.fail("An unexpected error occurred. Please try again later."));
         }
     }
 
