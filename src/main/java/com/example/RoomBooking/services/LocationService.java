@@ -43,16 +43,12 @@ public class LocationService {
         Location location = locationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Location not found with id: " + id));
 
-        location = Location.builder()
-                .id(location.getId())
-                .name(locationDTO.getName())
-                .url(locationDTO.getUrl())
-                .description(locationDTO.getDescription())
-                .properties(location.getProperties())
-                .build();
+        location.setName(locationDTO.getName());
+        location.setUrl(locationDTO.getUrl());
+        location.setDescription(locationDTO.getDescription());
 
-        Location updatedLocation = locationRepository.save(location);
-        return MapToDTO(updatedLocation);
+        Location updated = locationRepository.save(location);
+        return MapToDTO(updated);
     }
 
     public void deleteLocation(Long id) {
