@@ -3,6 +3,7 @@ package com.example.RoomBooking.models;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @NoArgsConstructor
@@ -13,6 +14,7 @@ import java.util.List;
 @Entity
 @Table(name = "location")
 public class Location {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -30,4 +32,3 @@ public class Location {
     @Builder.Default
     private List<Property> properties = new ArrayList<>();
 }
-
