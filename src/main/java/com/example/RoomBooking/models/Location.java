@@ -27,6 +27,7 @@ public class Location {
     private String description;
 
     @OneToMany(mappedBy = "location")
-    private List<Property> properties;
+    @Builder.Default
+    private List<Property> properties = new ArrayList<>();
 }
 
